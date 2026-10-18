@@ -3,473 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>專業企業履歷管理系統 - Professional Corporate Resume</title>
+    <title>企業商業版 - 個人高級履歷生成系統</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter & Noto Sans TC -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SheetJS (XLSX) for Excel Export/Import -->
+    <!-- SheetJS (Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- html2canvas for High-Res PNG Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        corporate: {
-                            rose: '#d48386',
-                            roseDark: '#b86a6d',
-                            navy: '#2c3e50',
-                            navyLight: '#34495e',
-                            offwhite: '#f8f9fa',
-                            card: '#ffffff'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Noto Sans TC', 'Inter', sans-serif; background-color: #f8f9fa; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        @media print {
-            body { background: white; }
-            no-print { display: none !important; }
-        }
-    </style>
-</head>
-<body class="text-slate-800 min-h-screen flex flex-col">
-
-    <!-- Auth / Login Portal Modal -->
-    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm transition-opacity duration-300">
-        <div class="bg-white w-full max-w-md mx-4 rounded-2xl shadow-2xl p-8 border border-slate-100 transform transition-all">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-corporate-navy text-white text-2xl font-black mb-4 shadow-lg shadow-corporate-navy/20">
-                    <i class="fa-solid fa-address-card"></i>
-                </div>
-                <h1 class="text-2xl font-black text-corporate-navy tracking-tight">專業企業履歷系統</h1>
-                <p class="text-sm text-slate-500 mt-1">請登入您的 Firebase 帳號以同步雲端履歷資料</p>
-            </div>
-
-            <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">電子郵件帳號</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                            <i class="fa-solid fa-envelope"></i>
-                        </span>
-                        <input type="email" id="login-email" required placeholder="name@company.com" 
-                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-corporate-navy focus:bg-white transition-all">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">密碼</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                            <i class="fa-solid fa-lock"></i>
-                        </span>
-                        <input type="password" id="login-password" required placeholder="••••••••" 
-                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-corporate-navy focus:bg-white transition-all">
-                    </div>
-                </div>
-
-                <div id="auth-error" class="hidden text-xs font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span id="auth-error-text">登入失敗，請檢查帳號密碼。</span>
-                </div>
-
-                <div class="flex gap-3 pt-2">
-                    <button type="submit" id="login-btn" class="flex-1 py-3 bg-corporate-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg shadow-corporate-navy/20 transition-all text-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-right-to-bracket"></i> 登入系統
-                    </button>
-                    <button type="button" onclick="handleRegister()" id="register-btn" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-corporate-navy font-bold rounded-xl transition-all text-sm">
-                        註冊帳號
-                    </button>
-                </div>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <p class="text-xs text-slate-400">提示：首次使用可直接輸入新郵件與密碼點擊「註冊帳號」</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Notification Modal -->
-    <div id="msg-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl p-6 text-center border border-slate-100">
-            <div id="msg-icon" class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-4">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <h3 id="msg-title" class="text-lg font-black text-slate-800 mb-2">通知訊息</h3>
-            <p id="msg-text" class="text-sm text-slate-600 mb-6">操作已成功完成。</p>
-            <button onclick="closeMsgModal()" class="w-full py-2.5 bg-corporate-navy text-white font-bold rounded-xl text-sm shadow-md hover:bg-slate-800 transition-all">確定</button>
-        </div>
-    </div>
-
-    <!-- Color Picker Modal (Double-Click Box Customization) -->
-    <div id="color-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-100 text-center">
-            <h3 class="text-lg font-black text-slate-800 mb-1">自訂外框顏色</h3>
-            <p class="text-xs text-slate-500 mb-4">請從以下 10 種專業企業色系中選擇一款：</p>
-            <div id="color-palette-grid" class="grid grid-cols-5 gap-3 mb-6">
-                <button onclick="applyBoxColor('#d48386')" class="w-12 h-12 rounded-xl bg-[#d48386] shadow-md hover:scale-105 transition-transform border-2 border-white" title="玫瑰金"></button>
-                <button onclick="applyBoxColor('#2c3e50')" class="w-12 h-12 rounded-xl bg-[#2c3e50] shadow-md hover:scale-105 transition-transform border-2 border-white" title="海軍藍"></button>
-                <button onclick="applyBoxColor('#1e293b')" class="w-12 h-12 rounded-xl bg-[#1e293b] shadow-md hover:scale-105 transition-transform border-2 border-white" title="深石墨灰"></button>
-                <button onclick="applyBoxColor('#0f766e')" class="w-12 h-12 rounded-xl bg-[#0f766e] shadow-md hover:scale-105 transition-transform border-2 border-white" title="深青綠"></button>
-                <button onclick="applyBoxColor('#166534')" class="w-12 h-12 rounded-xl bg-[#166534] shadow-md hover:scale-105 transition-transform border-2 border-white" title="森林綠"></button>
-                <button onclick="applyBoxColor('#9a3412')" class="w-12 h-12 rounded-xl bg-[#9a3412] shadow-md hover:scale-105 transition-transform border-2 border-white" title="磚紅栗色"></button>
-                <button onclick="applyBoxColor('#581c87')" class="w-12 h-12 rounded-xl bg-[#581c87] shadow-md hover:scale-105 transition-transform border-2 border-white" title="皇家紫"></button>
-                <button onclick="applyBoxColor('#0369a1')" class="w-12 h-12 rounded-xl bg-[#0369a1] shadow-md hover:scale-105 transition-transform border-2 border-white" title="鋼青藍"></button>
-                <button onclick="applyBoxColor('#b45309')" class="w-12 h-12 rounded-xl bg-[#b45309] shadow-md hover:scale-105 transition-transform border-2 border-white" title="琥珀金"></button>
-                <button onclick="applyBoxColor('#334155')" class="w-12 h-12 rounded-xl bg-[#334155] shadow-md hover:scale-105 transition-transform border-2 border-white" title="經典暗灰"></button>
-            </div>
-            <button onclick="closeColorModal()" class="w-full py-2.5 bg-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-300 transition-all">取消</button>
-        </div>
-    </div>
-
-    <!-- Top Navigation Bar -->
-    <header class="bg-corporate-navy text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-corporate-rose flex items-center justify-center text-white font-black text-lg shadow-inner">
-                    <i class="fa-solid fa-briefcase"></i>
-                </div>
-                <div>
-                    <h1 class="font-black text-base sm:text-lg tracking-tight leading-none">專業企業履歷系統</h1>
-                    <span class="text-xs text-slate-300 font-medium">Professional Corporate Resume</span>
-                </div>
-            </div>
-
-            <!-- Status & User Profile Info -->
-            <div class="flex items-center space-x-4">
-                <div id="conn-status" class="hidden sm:flex items-center space-x-2 px-3 py-1 bg-slate-800/80 rounded-full border border-slate-700 text-xs font-semibold">
-                    <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="conn-text" class="text-slate-200">雲端連線中</span>
-                </div>
-
-                <div class="hidden md:flex items-center space-x-1.5 text-xs text-slate-300 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700">
-                    <i class="fa-solid fa-clock-rotate-left text-corporate-rose"></i>
-                    <span>上次儲存: <strong id="last-saved-time" class="text-white font-medium">尚未儲存</strong></span>
-                </div>
-
-                <div class="flex items-center space-x-3 border-l border-slate-700 pl-4">
-                    <span id="user-display-email" class="text-xs font-medium text-slate-300 hidden lg:inline-block truncate max-w-[150px]"></span>
-                    <button onclick="handleLogout()" class="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
-                        <i class="fa-solid fa-right-from-bracket"></i> 登出
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        <!-- Left Column: Interactive Form Panel (5 cols) -->
-        <section class="lg:col-span-5 bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden flex flex-col h-[calc(100vh-7rem)] sticky top-20">
-            <div class="bg-corporate-navy text-white px-6 py-4 flex items-center justify-between border-b border-slate-700">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-corporate-rose"></i>
-                    <h2 class="font-bold text-base tracking-wide">編輯個人履歷資料</h2>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <button onclick="saveToFirebase()" class="px-3 py-1.5 bg-corporate-rose hover:bg-corporate-roseDark text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端
-                    </button>
-                </div>
-            </div>
-
-            <!-- Toolbar for Excel, Font Size & New Tab Fullscreen -->
-            <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-excel"></i> 匯出 Excel
-                    </button>
-                    <label class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
-                        <i class="fa-solid fa-file-import"></i> 匯入 Excel
-                        <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
-                    </label>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="openInNewTab()" class="px-3 py-1.5 bg-corporate-navy hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 獨立開分頁滿版預覽
-                    </button>
-                    <button onclick="exportHighResPNG()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-image"></i> 匯出 PNG
-                    </button>
-                </div>
-            </div>
-
-            <!-- Font Size Adjuster Toolbar -->
-            <div class="bg-amber-50 px-6 py-2.5 border-b border-amber-100 flex items-center justify-between text-xs font-bold text-amber-900">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-text-height"></i> 字型大小調整:</span>
-                <div class="flex items-center gap-3">
-                    <input type="range" id="font-size-slider" min="85" max="130" value="100" oninput="changeFontSize(this.value)" class="w-32 accent-corporate-navy">
-                    <span id="font-size-label" class="w-10 text-right">100%</span>
-                </div>
-            </div>
-
-            <!-- Form Fields Container -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                
-                <!-- Personal Basic Info -->
-                <div class="space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy border-b border-slate-200 pb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-user text-corporate-rose"></i> 基本資料
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">姓名 (中文)</label>
-                            <input type="text" id="input-name" value="劉金勳" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">英文名 / 職稱 (English)</label>
-                            <input type="text" id="input-eng-name" value="Jacky_Liu" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">照片圖片網址 (URL)</label>
-                        <input type="text" id="input-photo" value="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">電話號碼</label>
-                            <input type="text" id="input-phone" value="(886) 921502352" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">電子信箱</label>
-                            <input type="email" id="input-email" value="n1693131@gmail.com" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">工作室 / 地址</label>
-                            <input type="text" id="input-address" value="艾美工作室 紐約市123街" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">學歷背景</label>
-                            <input type="text" id="input-education" value="香港浸會大學 文學學士 (榮譽) 在多媒體" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">認證 / 榮譽頭銜</label>
-                        <input type="text" id="input-cert" value="認證領導顧問" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
-                    </div>
-                </div>
-
-                <!-- Summary / About Me -->
-                <div class="space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy border-b border-slate-200 pb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-address-card text-corporate-rose"></i> 關於我 (個人簡介)
-                    </h3>
-                    <div>
-                        <textarea id="input-summary" rows="3" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。尢猁逃綜捊闞眢藎酋泞忁沄佈杌嗹蔥兀莯紲凝渲。仿垠郗淬恐鸛菹狊汏挑疕芙於笮毛纫蚅賬陳。冇郡哈揆局鴞堿漫而吁吊哢神紡邴幫亍畀魅挐。</textarea>
-                    </div>
-                </div>
-
-                <!-- Experience Timeline Items -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
-                            <i class="fa-solid fa-timeline text-corporate-rose"></i> 經驗經歷 (Experience)
-                        </h3>
-                        <button onclick="addExperienceRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> 新增經驗
-                        </button>
-                    </div>
-                    <div id="experience-forms-container" class="space-y-3">
-                        <!-- Dynamic Experience Forms -->
-                    </div>
-                </div>
-
-                <!-- Skills & Ratings -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
-                            <i class="fa-solid fa-star text-corporate-rose"></i> 技能專長 (評分 1-5)
-                        </h3>
-                        <button onclick="addSkillRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> 新增技能
-                        </button>
-                    </div>
-                    <div id="skills-forms-container" class="space-y-3">
-                        <!-- Dynamic Skills Forms -->
-                    </div>
-                </div>
-
-                <!-- Hobbies / Interests -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
-                            <i class="fa-solid fa-heart text-corporate-rose"></i> 興趣愛好 (Hobbies)
-                        </h3>
-                        <button onclick="addHobbyRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> 新增興趣
-                        </button>
-                    </div>
-                    <div id="hobbies-forms-container" class="space-y-3">
-                        <!-- Dynamic Hobbies Forms -->
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- Right Column: Detailed Resume Preview (7 cols) -->
-        <section class="lg:col-span-7 flex flex-col items-center">
-            <div class="w-full flex items-center justify-between mb-3 px-2">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <i class="fa-solid fa-eye text-corporate-rose"></i> 大型個人詳細履歷表預覽 (Live Preview)
-                </span>
-                <span class="text-xs text-slate-400 font-medium">提示: 雙擊任意框格可自訂顏色</span>
-            </div>
-
-            <!-- Resume Canvas Card -->
-            <div id="resume-canvas" class="resume-wrapper w-full bg-[#fdfbfb] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative font-sans text-slate-800 transition-all duration-300" style="min-height: 1100px;">
-                
-                <div id="box-bg-left" ondblclick="openColorModal('box-bg-left')" class="absolute top-0 left-0 w-full md:w-[38%] h-full bg-corporate-rose/15 pointer-events-auto cursor-pointer transition-colors" title="雙擊更改左側背景色"></div>
-
-                <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 min-h-[1100px]">
-                    
-                    <!-- Left Sidebar (5 cols on md) -->
-                    <div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-between border-r border-corporate-rose/20 bg-transparent">
-                        <div class="space-y-8">
-                            <div class="flex flex-col items-center">
-                                <div id="box-photo" ondblclick="openColorModal('box-photo')" class="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-white mb-6 relative transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer" title="雙擊更改照片外框">
-                                    <img id="preview-photo" src="" alt="Avatar" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/d48386/ffffff?text=Photo'">
-                                </div>
-                            </div>
-
-                            <div id="box-contact" ondblclick="openColorModal('box-contact')" class="space-y-4 bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20 cursor-pointer hover:border-corporate-rose transition-colors" title="雙擊更改聯絡資訊框顏色">
-                                <div class="flex items-start gap-3">
-                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-phone text-xs"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-[11px] font-bold text-slate-400 uppercase">電話號碼</div>
-                                        <div id="preview-phone" class="text-xs font-bold text-slate-700 break-all"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-envelope text-xs"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-[11px] font-bold text-slate-400 uppercase">電子信箱</div>
-                                        <div id="preview-email" class="text-xs font-bold text-slate-700 break-all"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-location-dot text-xs"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-[11px] font-bold text-slate-400 uppercase">工作室 / 地址</div>
-                                        <div id="preview-address" class="text-xs font-bold text-slate-700"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-graduation-cap text-xs"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-[11px] font-bold text-slate-400 uppercase">學歷背景</div>
-                                        <div id="preview-education" class="text-xs font-bold text-slate-700"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
-                                        <i class="fa-solid fa-award text-xs"></i>
-                                    </span>
-                                    <div>
-                                        <div class="text-[11px] font-bold text-slate-400 uppercase">認證 / 榮譽</div>
-                                        <div id="preview-cert" class="text-xs font-bold text-slate-700"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div id="box-skills-title" ondblclick="openColorModal('box-skills-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改技能標題顏色">
-                                    技能專長
-                                </div>
-                                <div id="box-skills" ondblclick="openColorModal('box-skills')" class="space-y-3 bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20 cursor-pointer hover:border-corporate-rose transition-colors" title="雙擊更改技能區塊顏色">
-                                    <div id="preview-skills" class="space-y-3"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-8 pt-4 border-t border-corporate-rose/20 text-center text-[11px] text-slate-400 font-medium">
-                            Professional Resume • Corporate Edition
-                        </div>
-                    </div>
-
-                    <!-- Right Main Section (7 cols on md) -->
-                    <div class="md:col-span-7 p-6 md:p-10 flex flex-col justify-between bg-transparent">
-                        <div class="space-y-8">
-                            
-                            <div>
-                                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-200 gap-4">
-                                    <div>
-                                        <h1 id="preview-name" class="text-3xl md:text-4xl font-black text-corporate-navy tracking-tight leading-tight"></h1>
-                                        <div id="preview-eng-name" class="text-sm md:text-base font-bold text-slate-500 tracking-wider mt-1"></div>
-                                    </div>
-                                    <span class="self-start md:self-auto text-xs font-extrabold px-3.5 py-1.5 bg-corporate-rose/20 text-corporate-rose rounded-full shadow-sm">VIP 商業旗艦</span>
-                                </div>
-
-                                <div id="box-about-title" ondblclick="openColorModal('box-about-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-3 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改關於我標題顏色">
-                                    關於我
-                                </div>
-                                <p id="preview-summary" class="text-xs md:text-sm text-slate-600 leading-relaxed font-medium bg-white/90 p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-                                </p>
-                            </div>
-
-                            <div>
-                                <div id="box-exp-title" ondblclick="openColorModal('box-exp-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-5 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改經驗標題顏色">
-                                    經驗經歷
-                                </div>
-                                <div id="preview-experience" class="space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-corporate-rose/40 pl-2">
-                                </div>
-                            </div>
-
-                            <div>
-                                <div id="box-hobby-title" ondblclick="openColorModal('box-hobby-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改興趣標題顏色">
-                                    興趣愛好
-                                </div>
-                                <div id="preview-hobbies" class="grid grid-cols-3 gap-3">
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="mt-10 pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400">
-                            <span>企業級履歷數據管理</span>
-                            <span>Powered by Firebase Realtime DB</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Firebase SDKs & App Logic -->
+    <!-- html2canvas (PNG Export) -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyACPEmAeUX5zruIKxXXTfNkgdtrpZJvfy4",
             authDomain: "resume-3f321.firebaseapp.com",
@@ -477,722 +26,850 @@
             storageBucket: "resume-3f321.firebasestorage.app",
             messagingSenderId: "156367866837",
             appId: "1:156367866837:web:895fe9bdea4b76506f4b5c",
-            measurementId: "G-5KKFNGVN6L",
-            databaseURL: "https://resume-3f321-default-rtdb.firebaseio.com"
+            measurementId: "G-5KKFNGVN6L"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        let currentUser = null;
-        let isOnline = navigator.onLine;
-        let activeColorTargetId = null;
+        window.firebaseApp = { auth, db, ref, set, get, onValue, update, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
 
-        const defaultResumeData = {
-            name: "劉金勳",
-            engName: "Jacky_Liu",
-            photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
+    <!-- 登入模態視窗 (Modal) -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-500/10 text-rose-400 text-2xl mb-3">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white">系統安全登入</h2>
+                <p class="text-sm text-slate-400 mt-1">請輸入您的 Firebase 帳號密碼以解鎖雲端履歷</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">電子郵件帳號</label>
+                    <input type="email" id="loginEmail" required value="n1693131@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-sm font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">密碼</label>
+                    <input type="password" id="loginPassword" required placeholder="請輸入密碼" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-sm font-bold">
+                </div>
+                <div id="loginError" class="text-rose-400 text-xs font-bold hidden"></div>
+                <button type="submit" class="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black rounded-lg shadow-lg transition duration-200">
+                    立即登入連線
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 頂部導航列 -->
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
+                <i class="fa-solid fa-address-card"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-wider text-white">企業商業版 - 高級履歷管理系統</h1>
+                <p class="text-xs text-slate-400 font-medium flex items-center space-x-2">
+                    <span id="connStatus" class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>已連線至 Firebase Realtime Database</span>
+                    <span>•</span>
+                    <span id="lastSavedTime">尚未儲存</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span id="userEmailDisplay" class="text-xs font-bold text-slate-300 bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-600"></span>
+            <button id="logoutBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">登出</button>
+        </div>
+    </header>
+
+    <!-- 主內容區：雙欄編輯與預覽 -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 overflow-hidden">
+        
+        <!-- 左側：編輯表單區 (5欄) -->
+        <section class="lg:col-span-5 bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between">
+                <h2 class="text-sm font-black uppercase tracking-wider text-white flex items-center">
+                    <i class="fa-solid fa-pen-to-square text-rose-500 mr-2"></i>編輯個人履歷資料
+                </h2>
+                <button id="saveCloudBtn" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-black shadow transition flex items-center space-x-1">
+                    <i class="fa-solid fa-cloud-arrow-up"></i><span>儲存至雲端</span>
+                </button>
+            </div>
+
+            <!-- 工具列按鈕 -->
+            <div class="p-4 bg-slate-900/60 border-b border-slate-700 grid grid-cols-2 gap-2">
+                <button id="exportExcelBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center space-x-1.5 shadow transition">
+                    <i class="fa-solid fa-file-excel"></i><span>匯出 Excel</span>
+                </button>
+                <label class="bg-sky-600 hover:bg-sky-500 text-white py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center space-x-1.5 shadow transition cursor-pointer">
+                    <i class="fa-solid fa-file-arrow-in"></i><span>匯入 Excel</span>
+                    <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden">
+                </label>
+                <button id="openFullScreenBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-3 rounded-lg text-xs font-black flex items-center justify-center space-x-1.5 shadow transition col-span-2">
+                    <i class="fa-solid fa-expand"></i><span>獨立開分頁 (滿版全螢幕預覽與高畫質PNG)</span>
+                </button>
+            </div>
+
+            <!-- 字型大小控制與說明 -->
+            <div class="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300 font-bold">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-text-height"></i>
+                    <span>字型大小調整:</span>
+                    <input type="range" id="fontSizeRange" min="80" max="140" value="100" class="w-28 accent-amber-500 cursor-pointer">
+                    <span id="fontSizeVal">100%</span>
+                </div>
+                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info mr-1"></i>雙擊任意框格自選10種顏色</span>
+            </div>
+
+            <!-- 表單輸入群組 -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+                
+                <!-- 基本資料 -->
+                <div class="space-y-3">
+                    <h3 class="text-rose-400 font-black uppercase text-[11px] tracking-wider border-b border-slate-700 pb-1">基本資料</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">姓名 (中文)</label>
+                            <input type="text" id="inputNameZh" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="劉金勳">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">英文名 / 職稱</label>
+                            <input type="text" id="inputNameEn" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="Jacky_Liu">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">照片圖片網址 (URL)</label>
+                        <input type="text" id="inputPhotoUrl" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="https://images.unsplash.com/photo-1573496359142-b8d8773">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">電話號碼</label>
+                            <input type="text" id="inputPhone" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="(886) 921502352">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-slate-400 mb-1">電子信箱</label>
+                            <input type="text" id="inputEmail" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="n1693131@gmail.com">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">工作室 / 地址</label>
+                        <input type="text" id="inputAddress" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="艾美工作室 紐約市123街">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">學歷背景</label>
+                        <input type="text" id="inputEducation" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="香港浸會大學 文學學士 (榮譽) 在多媒體">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 mb-1">認證 / 榮譽頭銜</label>
+                        <input type="text" id="inputCertification" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none" value="認證領導顧問">
+                    </div>
+                </div>
+
+                <!-- 關於我 -->
+                <div class="space-y-3 pt-2">
+                    <h3 class="text-rose-400 font-black uppercase text-[11px] tracking-wider border-b border-slate-700 pb-1">關於我 (個人簡介)</h3>
+                    <textarea id="inputAbout" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none resize-none">博波邛爵隩驛介一清癲莫坑丸柜于，嚙稷汀沐秘舉狨王于盼駟之馘截。毋炆樞椴始龢停疇癲忙虹洞她興沌滲忑茨鏇茲竅笥。尤俐逃綜捋闕督蓋酋濘曝沄佈机喨蔥兀渫純凝瑄。仿壆郁淬恐鸛菹昊汰挑疤芙於筆毛幼賬陳。右郡捺揆局鴆城漫而吁吊哢神紡那幫于畀魅簪。</textarea>
+                </div>
+
+                <!-- 經驗經歷 -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-1">
+                        <h3 class="text-rose-400 font-black uppercase text-[11px] tracking-wider">經驗經歷</h3>
+                        <button type="button" id="addExpBtn" class="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]"><i class="fa-solid fa-plus mr-1"></i>新增經歷</button>
+                    </div>
+                    <div id="experienceListContainer" class="space-y-3">
+                        <!-- 動態生成經驗項目 -->
+                    </div>
+                </div>
+
+                <!-- 技能專長 -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-1">
+                        <h3 class="text-rose-400 font-black uppercase text-[11px] tracking-wider">技能專長</h3>
+                        <button type="button" id="addSkillBtn" class="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]"><i class="fa-solid fa-plus mr-1"></i>新增技能</button>
+                    </div>
+                    <div id="skillsListContainer" class="space-y-2">
+                        <!-- 動態生成技能項目 -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 右側：主畫面即時預覽區 (7欄) -->
+        <section class="lg:col-span-7 bg-slate-800 border border-slate-700 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between">
+                <h2 class="text-sm font-black uppercase tracking-wider text-white flex items-center">
+                    <i class="fa-solid fa-eye text-sky-400 mr-2"></i>大型個人詳細履歷表預覽 (LIVE PREVIEW)
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-amber-300 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>雙擊任意框格自選10種顏色</span>
+                </div>
+            </div>
+
+            <!-- 履歷畫布預覽容器 -->
+            <div class="flex-1 overflow-y-auto p-6 bg-slate-900 flex justify-center items-start">
+                
+                <!-- 履歷主體紙張 (模擬精美排版) -->
+                <div id="resumeCanvas" class="w-full max-w-[800px] bg-white text-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-200" style="font-size: 16px;">
+                    
+                    <!-- 左側欄位 (粉色區塊 - 可自訂顏色) -->
+                    <div id="themeLeftCol" class="w-full md:w-[320px] p-8 flex flex-col justify-between shrink-0 transition-colors duration-200" style="background-color: #d9777f;">
+                        <div>
+                            <!-- 頭像框 (可自訂顏色) -->
+                            <div id="themePhotoBox" class="w-48 h-48 mx-auto rounded-3xl shadow-lg overflow-hidden border-4 border-white mb-8 bg-white flex items-center justify-center transition-colors duration-200">
+                                <img id="prevPhoto" src="" alt="Photo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d8773'">
+                            </div>
+
+                            <!-- 聯絡資訊列表 -->
+                            <div class="space-y-4 text-xs font-bold text-slate-700">
+                                <div class="flex items-center space-x-3 bg-white/80 p-3 rounded-2xl shadow-sm">
+                                    <div id="themeIcon1" class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 transition-colors duration-200" style="background-color: #d9777f;"><i class="fa-solid fa-phone"></i></div>
+                                    <span id="prevPhone" class="truncate font-black text-slate-800"></span>
+                                </div>
+                                <div class="flex items-center space-x-3 bg-white/80 p-3 rounded-2xl shadow-sm">
+                                    <div id="themeIcon2" class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 transition-colors duration-200" style="background-color: #d9777f;"><i class="fa-solid fa-envelope"></i></div>
+                                    <span id="prevEmail" class="truncate font-black text-slate-800"></span>
+                                </div>
+                                <div class="flex items-center space-x-3 bg-white/80 p-3 rounded-2xl shadow-sm">
+                                    <div id="themeIcon3" class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 transition-colors duration-200" style="background-color: #d9777f;"><i class="fa-solid fa-location-dot"></i></div>
+                                    <span id="prevAddress" class="truncate font-black text-slate-800"></span>
+                                </div>
+                                <div class="flex items-center space-x-3 bg-white/80 p-3 rounded-2xl shadow-sm">
+                                    <div id="themeIcon4" class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 transition-colors duration-200" style="background-color: #d9777f;"><i class="fa-solid fa-graduation-cap"></i></div>
+                                    <span id="prevEducation" class="truncate font-black text-slate-800"></span>
+                                </div>
+                                <div class="flex items-center space-x-3 bg-white/80 p-3 rounded-2xl shadow-sm">
+                                    <div id="themeIcon5" class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0 transition-colors duration-200" style="background-color: #d9777f;"><i class="fa-solid fa-award"></i></div>
+                                    <span id="prevCertification" class="truncate font-black text-slate-800"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 技能專長區塊 (左側下方) -->
+                        <div class="mt-8">
+                            <div id="themeSkillHeader" class="text-white px-6 py-2.5 rounded-full font-black text-center shadow-md mb-4 transition-colors duration-200" style="background-color: #3b4954;">
+                                技能專長
+                            </div>
+                            <div id="prevSkillsContainer" class="space-y-3">
+                                <!-- 動態生成預覽技能 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側欄位 (白色主區塊) -->
+                    <div class="flex-1 p-8 flex flex-col justify-between bg-white">
+                        <div>
+                            <!-- 姓名與職稱 (優化排版) -->
+                            <div class="flex items-start justify-between border-b-2 border-slate-100 pb-6 mb-6">
+                                <div>
+                                    <h2 id="prevNameZh" class="text-3xl font-black text-slate-900 tracking-tight mb-1">劉金勳</h2>
+                                    <div id="prevNameEn" class="text-xl font-bold text-slate-500 tracking-wide">Jacky_Liu</div>
+                                </div>
+                            </div>
+
+                            <!-- 關於我區塊 -->
+                            <div class="mb-8">
+                                <div id="themeAboutTag" class="inline-block text-white px-5 py-1.5 rounded-full font-black text-xs shadow-md mb-3 transition-colors duration-200" style="background-color: #3b4954;">
+                                    關於我
+                                </div>
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed font-bold text-xs shadow-inner" id="prevAbout">
+                                    個人簡介內容...
+                                </div>
+                            </div>
+
+                            <!-- 經驗經歷區塊 -->
+                            <div>
+                                <div id="themeExpTag" class="inline-block text-white px-5 py-1.5 rounded-full font-black text-xs shadow-md mb-4 transition-colors duration-200" style="background-color: #3b4954;">
+                                    經驗經歷
+                                </div>
+                                <div id="prevExperienceContainer" class="space-y-4 border-l-2 border-slate-200 ml-3 pl-6">
+                                    <!-- 動態生成經驗經歷 -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-4 border-t border-slate-100 text-right text-[10px] font-bold text-slate-400">
+                            Enterprise Business Resume System v3.2
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 10色選擇器彈窗 (雙擊框格觸發) -->
+    <div id="colorPickerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h3 class="text-base font-black text-white mb-2">自選框格主題顏色</h3>
+            <p class="text-xs text-slate-400 mb-4">請從下列 10 種專業商業配色中選擇一種套用：</p>
+            <div id="colorPaletteGrid" class="grid grid-cols-5 gap-3 mb-4">
+                <!-- 10色按鈕由JS生成 -->
+            </div>
+            <button id="closeColorModal" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg text-xs">取消</button>
+        </div>
+    </div>
+
+    <!-- 主程式邏輯 -->
+    <script type="module">
+        const { auth, db, ref, set, get, onValue, update, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window.firebaseApp;
+
+        // 10種專業商業配色
+        const corporateColors = [
+            { name: "尊爵玫瑰", hex: "#d9777f", dark: "#3b4954" },
+            { name: "極光墨綠", hex: "#10b981", dark: "#064e3b" },
+            { name: "商務靛藍", hex: "#3b82f6", dark: "#1e3a8a" },
+            { name: "尊榮紫羅", hex: "#8b5cf6", dark: "#4c1d95" },
+            { name: "科技琥珀", hex: "#f59e0b", dark: "#78350f" },
+            { name: "沉穩石墨", hex: "#475569", dark: "#0f172a" },
+            { name: "櫻花粉紅", hex: "#f43f5e", dark: "#881337" },
+            { name: "海洋蔚藍", hex: "#0ea5e9", dark: "#0369a1" },
+            { name: "翡翠青翠", hex: "#14b8a6", dark: "#115e59" },
+            { name: "時尚魅紫", hex: "#d946ef", dark: "#701a75" }
+        ];
+
+        // 預設資料狀態
+        let resumeData = {
+            nameZh: "劉金勳",
+            nameEn: "Jacky_Liu",
+            photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d8773",
             phone: "(886) 921502352",
             email: "n1693131@gmail.com",
             address: "艾美工作室 紐約市123街",
             education: "香港浸會大學 文學學士 (榮譽) 在多媒體",
-            cert: "認證領導顧問",
-            summary: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。尢猁逃綜捊闞眢藎酋泞忁沄佈杌嗹蔥兀莯紲凝渲。仿垠郗淬恐鸛菹狊汏挑疕芙於笮毛纫蚅賬陳。冇郡哈揆局鴞堿漫而吁吊哢神紡邴幫亍畀魅挐。",
+            certification: "認證領導顧問",
+            about: "博波邛爵隩驛介一清癲莫坑丸柜于，嚙稷汀沐秘舉狨王于盼駟之馘截。毋炆樞椴始龢停疇癲忙虹洞她興沌滲忑茨鏇茲竅笥。尤俐逃綜捋闕督蓋酋濘曝沄佈机喨蔥兀渫純凝瑄。仿壆郁淬恐鸛菹昊汰挑疤芙於筆毛幼賬陳。右郡捺揆局鴆城漫而吁吊哢神紡那幫于畀魅簪。",
+            themeColor: "#d9777f",
+            themeDark: "#3b4954",
+            fontSize: 100,
             experiences: [
-                { period: "2006 - 現在", title: "銷售團隊負責人", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" },
-                { period: "2003 - 2006", title: "銷售經理", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" },
-                { period: "2003 - 2006", title: "營業員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" }
+                { period: "2024 - 現在", title: "資深專案經理", desc: "請輸入工作內容說明..." },
+                { period: "2021 - 2024", title: "高級技術顧問", desc: "主導跨國製造業系統數位轉型與產線升級。" }
             ],
             skills: [
-                { name: "英語", rating: 4 },
-                { name: "法語", rating: 4 },
-                { name: "德語", rating: 4 },
-                { name: "中文", rating: 5 }
-            ],
-            hobbies: [
-                { name: "保齡球", icon: "fa-solid fa-bowling-ball" },
-                { name: "籃球", icon: "fa-solid fa-basketball" },
-                { name: "溜冰", icon: "fa-solid fa-person-skating" }
-            ],
-            boxColors: {
-                "box-bg-left": "rgba(212, 131, 134, 0.15)",
-                "box-photo": "#ffffff",
-                "box-contact": "#ffffff",
-                "box-skills": "#ffffff",
-                "box-skills-title": "#2c3e50",
-                "box-about-title": "#2c3e50",
-                "box-exp-title": "#2c3e50",
-                "box-hobby-title": "#2c3e50"
-            },
-            fontSizeScale: 100
+                { name: "英語", level: 5 },
+                { name: "法語", level: 4 },
+                { name: "德語", level: 3 },
+                { name: "中文", level: 5 }
+            ]
         };
 
-        window.addEventListener('online', () => { isOnline = true; updateConnUI(); });
-        window.addEventListener('offline', () => { isOnline = false; updateConnUI(); });
-        function updateConnUI() {
-            const dot = document.getElementById('conn-dot');
-            const txt = document.getElementById('conn-text');
-            if (isOnline) {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
-                txt.innerText = "雲端連線中";
-            } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
-                txt.innerText = "離線模式";
-            }
-        }
+        let activeTargetElementKey = null;
 
+        // DOM 元素
+        const authModal = document.getElementById('authModal');
+        const loginForm = document.getElementById('loginForm');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginError = document.getElementById('loginError');
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const lastSavedTime = document.getElementById('lastSavedTime');
+        const saveCloudBtn = document.getElementById('saveCloudBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const importExcelInput = document.getElementById('importExcelInput');
+        const openFullScreenBtn = document.getElementById('openFullScreenBtn');
+        const fontSizeRange = document.getElementById('fontSizeRange');
+        const fontSizeVal = document.getElementById('fontSizeVal');
+
+        // 輸入欄位
+        const inputNameZh = document.getElementById('inputNameZh');
+        const inputNameEn = document.getElementById('inputNameEn');
+        const inputPhotoUrl = document.getElementById('inputPhotoUrl');
+        const inputPhone = document.getElementById('inputPhone');
+        const inputEmail = document.getElementById('inputEmail');
+        const inputAddress = document.getElementById('inputAddress');
+        const inputEducation = document.getElementById('inputEducation');
+        const inputCertification = document.getElementById('inputCertification');
+        const inputAbout = document.getElementById('inputAbout');
+
+        const experienceListContainer = document.getElementById('experienceListContainer');
+        const addExpBtn = document.getElementById('addExpBtn');
+        const skillsListContainer = document.getElementById('skillsListContainer');
+        const addSkillBtn = document.getElementById('addSkillBtn');
+
+        // 預覽元素
+        const resumeCanvas = document.getElementById('resumeCanvas');
+        const prevNameZh = document.getElementById('prevNameZh');
+        const prevNameEn = document.getElementById('prevNameEn');
+        const prevPhoto = document.getElementById('prevPhoto');
+        const prevPhone = document.getElementById('prevPhone');
+        const prevEmail = document.getElementById('prevEmail');
+        const prevAddress = document.getElementById('prevAddress');
+        const prevEducation = document.getElementById('prevEducation');
+        const prevCertification = document.getElementById('prevCertification');
+        const prevAbout = document.getElementById('prevAbout');
+        const prevExperienceContainer = document.getElementById('prevExperienceContainer');
+        const prevSkillsContainer = document.getElementById('prevSkillsContainer');
+
+        // 顏色選擇彈窗
+        const colorPickerModal = document.getElementById('colorPickerModal');
+        const colorPaletteGrid = document.getElementById('colorPaletteGrid');
+        const closeColorModal = document.getElementById('closeColorModal');
+
+        // Firebase 認證監聽
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                currentUser = user;
-                document.getElementById('auth-modal').classList.add('hidden');
-                document.getElementById('user-display-email').innerText = user.email;
-                loadDataFromFirebase();
+                authModal.classList.add('hidden');
+                userEmailDisplay.textContent = user.email;
+                loadDataFromFirebase(user.uid);
             } else {
-                currentUser = null;
-                document.getElementById('auth-modal').classList.remove('hidden');
+                authModal.classList.remove('hidden');
             }
         });
 
-        window.handleLogin = async function(e) {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            const errBox = document.getElementById('auth-error');
-            const errText = document.getElementById('auth-error-text');
-            errBox.classList.add('hidden');
-
+            loginError.classList.add('hidden');
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
+                await signInWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
             } catch (error) {
-                errText.innerText = "登入失敗: " + error.message;
-                errBox.classList.remove('hidden');
+                loginError.textContent = "登入失敗: " + error.message;
+                loginError.classList.remove('hidden');
             }
-        }
+        });
 
-        window.handleRegister = async function() {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            const errBox = document.getElementById('auth-error');
-            const errText = document.getElementById('auth-error-text');
-            errBox.classList.add('hidden');
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
 
-            if (!email || !pass) {
-                errText.innerText = "請輸入電子郵件與密碼再註冊。";
-                errBox.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, pass);
-                showMsg("註冊成功", "已成功建立帳號並登入！", "success");
-            } catch (error) {
-                errText.innerText = "註冊失敗: " + error.message;
-                errBox.classList.remove('hidden');
-            }
-        }
-
-        window.handleLogout = async function() {
-            await signOut(auth);
-        }
-
-        window.saveToFirebase = async function() {
-            if (!currentUser) return;
-            const data = gatherFormData();
-            const safeEmailKey = currentUser.email.replace(/[.#$\/\[\]]/g, "_");
-            const dbRef = ref(db, 'resumes/' + safeEmailKey);
-            
-            try {
-                await set(dbRef, data);
-                const nowStr = new Date().toLocaleString('zh-TW');
-                document.getElementById('last-saved-time').innerText = nowStr;
-                localStorage.setItem('resume_last_saved', nowStr);
-                showMsg("儲存成功", "履歷資料已成功同步至 Firebase Realtime Database！", "success");
-            } catch (err) {
-                showMsg("儲存失敗", err.message, "error");
-            }
-        }
-
-        function loadDataFromFirebase() {
-            if (!currentUser) return;
-            const safeEmailKey = currentUser.email.replace(/[.#$\/\[\]]/g, "_");
-            const dbRef = ref(db, 'resumes/' + safeEmailKey);
-
+        function loadDataFromFirebase(uid) {
+            const dbRef = ref(db, 'resumes/' + uid);
             onValue(dbRef, (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
-                    populateForm(val);
+                    resumeData = Object.assign({}, resumeData, val);
+                    updateUIFromData();
                 } else {
-                    populateForm(defaultResumeData);
-                    saveToFirebase();
+                    saveDataToFirebase();
                 }
-                const savedTime = localStorage.getItem('resume_last_saved') || '剛剛';
-                document.getElementById('last-saved-time').innerText = savedTime;
-            }, (error) => {
-                console.error("Firebase read error:", error);
             });
         }
 
-        function populateForm(data) {
-            document.getElementById('input-name').value = data.name || '';
-            document.getElementById('input-eng-name').value = data.engName || '';
-            document.getElementById('input-photo').value = data.photo || '';
-            document.getElementById('input-phone').value = data.phone || '';
-            document.getElementById('input-email').value = data.email || '';
-            document.getElementById('input-address').value = data.address || '';
-            document.getElementById('input-education').value = data.education || '';
-            document.getElementById('input-cert').value = data.cert || '';
-            document.getElementById('input-summary').value = data.summary || '';
-
-            if (data.fontSizeScale) {
-                const slider = document.getElementById('font-size-slider');
-                if (slider) slider.value = data.fontSizeScale;
-                changeFontSize(data.fontSizeScale, false);
+        async function saveDataToFirebase() {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+                resumeData.lastSaved = new Date().toLocaleString();
+                await set(ref(db, 'resumes/' + user.uid), resumeData);
+                lastSavedTime.textContent = "上次儲存: " + resumeData.lastSaved;
+                saveCloudBtn.innerHTML = `<i class="fa-solid fa-check"></i><span>已儲存</span>`;
+                setTimeout(() => {
+                    saveCloudBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i><span>儲存至雲端</span>`;
+                }, 2000);
+            } catch (err) {
+                alert("儲存失敗: " + err.message);
             }
-
-            if (data.boxColors) {
-                applySavedBoxColors(data.boxColors);
-            }
-
-            const expContainer = document.getElementById('experience-forms-container');
-            if (expContainer) {
-                expContainer.innerHTML = '';
-                (data.experiences || []).forEach(exp => {
-                    appendExperienceRow(exp.period, exp.title, exp.desc);
-                });
-            }
-
-            const skillContainer = document.getElementById('skills-forms-container');
-            if (skillContainer) {
-                skillContainer.innerHTML = '';
-                (data.skills || []).forEach(skill => {
-                    appendSkillRow(skill.name, skill.rating);
-                });
-            }
-
-            const hobbyContainer = document.getElementById('hobbies-forms-container');
-            if (hobbyContainer) {
-                hobbyContainer.innerHTML = '';
-                (data.hobbies || []).forEach(hobby => {
-                    appendHobbyRow(hobby.name, hobby.icon);
-                });
-            }
-
-            updatePreview();
         }
 
-        function gatherFormData() {
-            const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-            const data = {
-                name: getVal('input-name'),
-                engName: getVal('input-eng-name'),
-                photo: getVal('input-photo'),
-                phone: getVal('input-phone'),
-                email: getVal('input-email'),
-                address: getVal('input-address'),
-                education: getVal('input-education'),
-                cert: getVal('input-cert'),
-                summary: getVal('input-summary'),
-                fontSizeScale: parseInt(getVal('font-size-slider') || '100'),
-                boxColors: getCurrentBoxColors(),
-                experiences: [],
-                skills: [],
-                hobbies: []
-            };
+        saveCloudBtn.addEventListener('click', saveDataToFirebase);
 
-            document.querySelectorAll('.experience-item').forEach(el => {
-                const p = el.querySelector('.exp-period');
-                const t = el.querySelector('.exp-title');
-                const d = el.querySelector('.exp-desc');
-                data.experiences.push({
-                    period: p ? p.value : '',
-                    title: t ? t.value : '',
-                    desc: d ? d.value : ''
-                });
+        function collectDataFromUI() {
+            resumeData.nameZh = inputNameZh.value;
+            resumeData.nameEn = inputNameEn.value;
+            resumeData.photoUrl = inputPhotoUrl.value;
+            resumeData.phone = inputPhone.value;
+            resumeData.email = inputEmail.value;
+            resumeData.address = inputAddress.value;
+            resumeData.education = inputEducation.value;
+            resumeData.certification = inputCertification.value;
+            resumeData.about = inputAbout.value;
+
+            const expRows = document.querySelectorAll('.exp-row');
+            resumeData.experiences = Array.from(expRows).map(row => ({
+                period: row.querySelector('.exp-period').value,
+                title: row.querySelector('.exp-title').value,
+                desc: row.querySelector('.exp-desc').value
+            }));
+
+            const skillRows = document.querySelectorAll('.skill-row');
+            resumeData.skills = Array.from(skillRows).map(row => ({
+                name: row.querySelector('.skill-name').value,
+                level: parseInt(row.querySelector('.skill-level').value) || 3
+            }));
+        }
+
+        function updateUIFromData() {
+            inputNameZh.value = resumeData.nameZh || '';
+            inputNameEn.value = resumeData.nameEn || '';
+            inputPhotoUrl.value = resumeData.photoUrl || '';
+            inputPhone.value = resumeData.phone || '';
+            inputEmail.value = resumeData.email || '';
+            inputAddress.value = resumeData.address || '';
+            inputEducation.value = resumeData.education || '';
+            inputCertification.value = resumeData.certification || '';
+            inputAbout.value = resumeData.about || '';
+            fontSizeRange.value = resumeData.fontSize || 100;
+            fontSizeVal.textContent = (resumeData.fontSize || 100) + '%';
+            resumeCanvas.style.fontSize = (resumeData.fontSize || 100) + '%';
+
+            renderExperienceEditor();
+            renderSkillsEditor();
+            renderPreview();
+        }
+
+        function renderPreview() {
+            prevNameZh.textContent = resumeData.nameZh;
+            prevNameEn.textContent = resumeData.nameEn;
+            prevPhoto.src = resumeData.photoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d8773';
+            prevPhone.textContent = resumeData.phone;
+            prevEmail.textContent = resumeData.email;
+            prevAddress.textContent = resumeData.address;
+            prevEducation.textContent = resumeData.education;
+            prevCertification.textContent = resumeData.certification;
+            prevAbout.textContent = resumeData.about;
+
+            const primaryColor = resumeData.themeColor || '#d9777f';
+            const darkColor = resumeData.themeDark || '#3b4954';
+
+            document.getElementById('themeLeftCol').style.backgroundColor = primaryColor;
+            document.getElementById('themePhotoBox').style.borderColor = '#ffffff';
+            
+            document.querySelectorAll('[id^="themeIcon"]').forEach(el => {
+                el.style.backgroundColor = primaryColor;
             });
+            document.getElementById('themeSkillHeader').style.backgroundColor = darkColor;
+            document.getElementById('themeAboutTag').style.backgroundColor = darkColor;
+            document.getElementById('themeExpTag').style.backgroundColor = darkColor;
 
-            document.querySelectorAll('.skill-item').forEach(el => {
-                const n = el.querySelector('.skill-name');
-                const r = el.querySelector('.skill-rating');
-                data.skills.push({
-                    name: n ? n.value : '',
-                    rating: r ? (parseInt(r.value) || 3) : 3
-                });
-            });
+            prevExperienceContainer.innerHTML = (resumeData.experiences || []).map(exp => `
+                <div class="relative">
+                    <div class="absolute -left-[31px] top-1 w-3 h-3 rounded-full border-2 border-white" style="background-color: ${darkColor};"></div>
+                    <div class="text-[11px] font-bold" style="color: ${primaryColor};">${exp.period}</div>
+                    <div class="text-sm font-black text-slate-900">${exp.title}</div>
+                    <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
+                </div>
+            `).join('');
 
-            document.querySelectorAll('.hobby-item').forEach(el => {
-                const n = el.querySelector('.hobby-name');
-                const i = el.querySelector('.hobby-icon');
-                data.hobbies.push({
-                    name: n ? n.value : '',
-                    icon: i ? i.value : ''
-                });
-            });
+            prevSkillsContainer.innerHTML = (resumeData.skills || []).map(skill => `
+                <div class="flex items-center justify-between bg-white/80 px-4 py-2.5 rounded-xl shadow-sm">
+                    <span class="text-xs font-black text-slate-800">${skill.name}</span>
+                    <div class="flex space-x-1">
+                        ${[1, 2, 3, 4, 5].map(star => `
+                            <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${star <= skill.level ? darkColor : '#cbd5e1'};"></div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
 
-            return data;
-        }
-
-        function getCurrentBoxColors() {
-            const getColor = (id) => { const el = document.getElementById(id); return el ? (el.style.backgroundColor || '') : ''; };
-            return {
-                "box-bg-left": getColor('box-bg-left') || 'rgba(212, 131, 134, 0.15)',
-                "box-photo": getColor('box-photo') || '#ffffff',
-                "box-contact": getColor('box-contact') || '#ffffff',
-                "box-skills": getColor('box-skills') || '#ffffff',
-                "box-skills-title": getColor('box-skills-title') || '#2c3e50',
-                "box-about-title": getColor('box-about-title') || '#2c3e50',
-                "box-exp-title": getColor('box-exp-title') || '#2c3e50',
-                "box-hobby-title": getColor('box-hobby-title') || '#2c3e50'
-            };
-        }
-
-        function applySavedBoxColors(colors) {
-            for (const [id, color] of Object.entries(colors)) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.style.backgroundColor = color;
-                }
+            if (resumeData.lastSaved) {
+                lastSavedTime.textContent = "上次儲存: " + resumeData.lastSaved;
             }
         }
 
-        window.openColorModal = function(boxId) {
-            activeColorTargetId = boxId;
-            const modal = document.getElementById('color-modal');
-            if (modal) modal.classList.remove('hidden');
+        function renderExperienceEditor() {
+            experienceListContainer.innerHTML = (resumeData.experiences || []).map((exp, idx) => `
+                <div class="exp-row bg-slate-900 border border-slate-700 p-3 rounded-xl space-y-2 relative group">
+                    <button type="button" onclick="window.removeExperience(${idx})" class="absolute top-2 right-2 text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash"></i></button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" class="exp-period bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.period}" placeholder="年份 (例: 2024 - 現在)">
+                        <input type="text" class="exp-title bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.title}" placeholder="職稱">
+                    </div>
+                    <textarea class="exp-desc w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs resize-none" rows="2" placeholder="工作說明">${exp.desc}</textarea>
+                </div>
+            `).join('');
+            attachInputListeners();
         }
 
-        window.closeColorModal = function() {
-            const modal = document.getElementById('color-modal');
-            if (modal) modal.classList.add('hidden');
-            activeColorTargetId = null;
+        function renderSkillsEditor() {
+            skillsListContainer.innerHTML = (resumeData.skills || []).map((skill, idx) => `
+                <div class="skill-row flex items-center space-x-2 bg-slate-900 border border-slate-700 p-2 rounded-xl">
+                    <input type="text" class="skill-name bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs flex-1" value="${skill.name}" placeholder="技能名稱">
+                    <select class="skill-level bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs">
+                        <option value="1" ${skill.level==1?'selected':''}>等級 1</option>
+                        <option value="2" ${skill.level==2?'selected':''}>等級 2</option>
+                        <option value="3" ${skill.level==3?'selected':''}>等級 3</option>
+                        <option value="4" ${skill.level==4?'selected':''}>等級 4</option>
+                        <option value="5" ${skill.level==5?'selected':''}>等級 5</option>
+                    </select>
+                    <button type="button" onclick="window.removeSkill(${idx})" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+            attachInputListeners();
         }
 
-        window.applyBoxColor = function(colorHex) {
-            if (!activeColorTargetId) return;
-            const el = document.getElementById(activeColorTargetId);
-            if (el) {
-                if (activeColorTargetId === 'box-bg-left') {
-                    el.style.backgroundColor = hexToRgba(colorHex, 0.15);
-                } else {
-                    el.style.backgroundColor = colorHex;
-                }
+        function attachInputListeners() {
+            const allInputs = document.querySelectorAll('main input, main textarea, main select');
+            allInputs.forEach(input => {
+                input.removeEventListener('input', handleInputChange);
+                input.addEventListener('input', handleInputChange);
+                input.removeEventListener('change', handleInputChange);
+                input.addEventListener('change', handleInputChange);
+            });
+        }
+
+        function handleInputChange() {
+            collectDataFromUI();
+            renderPreview();
+        }
+
+        window.removeExperience = (idx) => {
+            resumeData.experiences.splice(idx, 1);
+            updateUIFromData();
+        };
+        window.removeSkill = (idx) => {
+            resumeData.skills.splice(idx, 1);
+            updateUIFromData();
+        };
+
+        addExpBtn.addEventListener('click', () => {
+            if (!resumeData.experiences) resumeData.experiences = [];
+            resumeData.experiences.push({ period: "2026 - 現在", title: "新職稱", desc: "請輸入工作內容說明..." });
+            updateUIFromData();
+        });
+
+        addSkillBtn.addEventListener('click', () => {
+            if (!resumeData.skills) resumeData.skills = [];
+            resumeData.skills.push({ name: "新技能", level: 4 });
+            updateUIFromData();
+        });
+
+        fontSizeRange.addEventListener('input', (e) => {
+            resumeData.fontSize = e.target.value;
+            fontSizeVal.textContent = e.target.value + '%';
+            resumeCanvas.style.fontSize = e.target.value + '%';
+        });
+
+        document.addEventListener('dblclick', (e) => {
+            const box = e.target.closest('#resumeCanvas > div, #themeLeftCol, #themePhotoBox, #themeSkillHeader, #themeAboutTag, #themeExpTag');
+            if (box) {
+                activeTargetElementKey = box.id;
+                openColorModalFn();
             }
-            closeColorModal();
-            updatePreview();
+        });
+
+        function openColorModalFn() {
+            colorPaletteGrid.innerHTML = corporateColors.map(c => `
+                <button onclick="window.applyColorTheme('${c.hex}', '${c.dark}')" class="h-12 rounded-xl border-2 border-slate-600 shadow-md hover:scale-105 transition flex flex-col items-center justify-center text-[10px] font-bold text-white" style="background-color: ${c.hex};">
+                    <span>${c.name}</span>
+                </button>
+            `).join('');
+            colorPickerModal.classList.remove('hidden');
         }
 
-        function hexToRgba(hex, alpha) {
-            let c = hex.replace('#','');
-            if(c.length===3) c = c.split('').map(x => x + x).join('');
-            const num = parseInt(c,16);
-            return `rgba(${num>>16},${(num>>8)&255},${num&255},${alpha})`;
-        }
+        closeColorModal.addEventListener('click', () => {
+            colorPickerModal.classList.add('hidden');
+        });
 
-        window.changeFontSize = function(val, save=true) {
-            const label = document.getElementById('font-size-label');
-            if (label) label.innerText = val + '%';
-            const resumeEl = document.getElementById('resume-canvas');
-            if (resumeEl) resumeEl.style.fontSize = (val / 100) * 100 + '%';
-        }
+        window.applyColorTheme = (hex, dark) => {
+            resumeData.themeColor = hex;
+            resumeData.themeDark = dark;
+            colorPickerModal.classList.add('hidden');
+            renderPreview();
+            saveDataToFirebase();
+        };
 
-        // Open Resume in a New Browser Tab (Full-screen high-res preview)
-        window.openInNewTab = function() {
-            const data = gatherFormData();
+        openFullScreenBtn.addEventListener('click', () => {
             const newWindow = window.open('', '_blank');
-            if (!newWindow) {
-                showMsg("提示", "瀏覽器攔截了彈出視窗，請允許彈出視窗以檢視獨立分頁。", "error");
-                return;
-            }
-
-            const htmlContent = `
+            newWindow.document.write(`
                 <!DOCTYPE html>
                 <html lang="zh-TW">
                 <head>
                     <meta charset="UTF-8">
-                    <title>${data.name} - 專業企業履歷</title>
+                    <title>${resumeData.nameZh} - 獨立全螢幕高畫質履歷</title>
                     <script src="https://cdn.tailwindcss.com"><\/script>
-                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                    <style>body { font-family: 'Noto Sans TC', 'Inter', sans-serif; background: #2c3e50; padding: 40px 20px; }</style>
+                    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"><\/script>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+                        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; margin: 0; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+                    </style>
                 </head>
-                <body class="flex flex-col items-center justify-start min-h-screen">
-                    <div class="mb-6 flex gap-4 no-print">
-                        <button onclick="window.print()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2">
-                            <i class="fa-solid fa-print"></i> 列印 / 儲存 PDF
+                <body>
+                    <div class="mb-6 flex space-x-4">
+                        <button id="downloadPngBtn" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-2 text-sm transition">
+                            <i class="fa-solid fa-download"></i><span>下載高畫質 PNG 圖片</span>
                         </button>
-                        <button onclick="window.close()" class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl shadow-lg transition-all">
-                            關閉分頁
+                        <button onclick="window.close()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-6 py-3 rounded-xl shadow-2xl text-sm transition">
+                            關閉視窗
                         </button>
                     </div>
-                    <div class="w-full max-w-4xl bg-[#fdfbfb] rounded-3xl shadow-2xl overflow-hidden relative font-sans text-slate-800" style="min-height: 1100px; font-size: ${data.fontSizeScale}%;">
-                        <div class="absolute top-0 left-0 w-[38%] h-full pointer-events-none" style="background-color: ${data.boxColors['box-bg-left']};"></div>
-                        <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 min-h-[1100px]">
-                            <div class="col-span-5 p-8 flex flex-col justify-between border-r border-corporate-rose/20">
-                                <div class="space-y-8">
-                                    <div class="flex flex-col items-center">
-                                        <div class="w-48 h-48 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-white mb-6" style="background-color: ${data.boxColors['box-photo']};">
-                                            <img src="${data.photo}" alt="Avatar" class="w-full h-full object-cover">
-                                        </div>
+
+                    <div id="fullResumeCanvas" class="w-full max-w-[900px] bg-white text-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative" style="font-size: ${resumeData.fontSize || 100}%;">
+                        <!-- 左側 -->
+                        <div class="w-full md:w-[340px] p-10 flex flex-col justify-between shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};">
+                            <div>
+                                <div class="w-48 h-48 mx-auto rounded-3xl shadow-lg overflow-hidden border-4 border-white mb-8 bg-white flex items-center justify-center">
+                                    <img src="${resumeData.photoUrl}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d8773'">
+                                </div>
+                                <div class="space-y-4 text-xs font-bold text-slate-700">
+                                    <div class="flex items-center space-x-3 bg-white/90 p-3.5 rounded-2xl shadow-sm">
+                                        <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};"><i class="fa-solid fa-phone"></i></div>
+                                        <span class="font-black text-slate-800">${resumeData.phone}</span>
                                     </div>
-                                    <div class="space-y-4 p-5 rounded-2xl shadow-sm border border-slate-200" style="background-color: ${data.boxColors['box-contact']};">
-                                        <div class="flex items-start gap-3">
-                                            <span class="w-8 h-8 rounded-xl bg-[#d48386] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-phone text-xs"></i></span>
-                                            <div><div class="text-[11px] font-bold text-slate-400 uppercase">電話號碼</div><div class="text-xs font-bold text-slate-700">${data.phone}</div></div>
-                                        </div>
-                                        <div class="flex items-start gap-3">
-                                            <span class="w-8 h-8 rounded-xl bg-[#d48386] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-envelope text-xs"></i></span>
-                                            <div><div class="text-[11px] font-bold text-slate-400 uppercase">電子信箱</div><div class="text-xs font-bold text-slate-700">${data.email}</div></div>
-                                        </div>
-                                        <div class="flex items-start gap-3">
-                                            <span class="w-8 h-8 rounded-xl bg-[#d48386] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-location-dot text-xs"></i></span>
-                                            <div><div class="text-[11px] font-bold text-slate-400 uppercase">工作室 / 地址</div><div class="text-xs font-bold text-slate-700">${data.address}</div></div>
-                                        </div>
-                                        <div class="flex items-start gap-3">
-                                            <span class="w-8 h-8 rounded-xl bg-[#d48386] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-graduation-cap text-xs"></i></span>
-                                            <div><div class="text-[11px] font-bold text-slate-400 uppercase">學歷背景</div><div class="text-xs font-bold text-slate-700">${data.education}</div></div>
-                                        </div>
-                                        <div class="flex items-start gap-3">
-                                            <span class="w-8 h-8 rounded-xl bg-[#d48386] text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-award text-xs"></i></span>
-                                            <div><div class="text-[11px] font-bold text-slate-400 uppercase">認證 / 榮譽</div><div class="text-xs font-bold text-slate-700">${data.cert}</div></div>
-                                        </div>
+                                    <div class="flex items-center space-x-3 bg-white/90 p-3.5 rounded-2xl shadow-sm">
+                                        <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};"><i class="fa-solid fa-envelope"></i></div>
+                                        <span class="font-black text-slate-800">${resumeData.email}</span>
                                     </div>
-                                    <div>
-                                        <div class="inline-block px-5 py-1.5 text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md" style="background-color: ${data.boxColors['box-skills-title']};">技能專長</div>
-                                        <div class="space-y-3 p-5 rounded-2xl shadow-sm border border-slate-200" style="background-color: ${data.boxColors['box-skills']};">
-                                            ${data.skills.map(s => `
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs font-black text-slate-700">${s.name}</span>
-                                                    <div class="flex items-center gap-1.5">${[1,2,3,4,5].map(i => `<span class="w-3.5 h-3.5 rounded-full ${i <= s.rating ? 'bg-[#d48386]' : 'bg-slate-200'} inline-block"></span>`).join('')}</div>
-                                                </div>
-                                            `).join('')}
-                                        </div>
+                                    <div class="flex items-center space-x-3 bg-white/90 p-3.5 rounded-2xl shadow-sm">
+                                        <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};"><i class="fa-solid fa-location-dot"></i></div>
+                                        <span class="font-black text-slate-800">${resumeData.address}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-3 bg-white/90 p-3.5 rounded-2xl shadow-sm">
+                                        <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};"><i class="fa-solid fa-graduation-cap"></i></div>
+                                        <span class="font-black text-slate-800">${resumeData.education}</span>
+                                    </div>
+                                    <div class="flex items-center space-x-3 bg-white/90 p-3.5 rounded-2xl shadow-sm">
+                                        <div class="w-8 h-8 rounded-full text-white flex items-center justify-center shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};"><i class="fa-solid fa-award"></i></div>
+                                        <span class="font-black text-slate-800">${resumeData.certification}</span>
                                     </div>
                                 </div>
-                                <div class="mt-8 pt-4 border-t border-slate-200 text-center text-[11px] text-slate-400">Professional Resume • Corporate Edition</div>
                             </div>
-                            <div class="col-span-7 p-10 flex flex-col justify-between">
-                                <div class="space-y-8">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
-                                            <div>
-                                                <h1 class="text-4xl font-black text-[#2c3e50] tracking-tight">${data.name}</h1>
-                                                <div class="text-base font-bold text-slate-500 tracking-wider mt-1">${data.engName}</div>
-                                            </div>
-                                            <span class="text-xs font-extrabold px-3.5 py-1.5 bg-[#d48386]/20 text-[#d48386] rounded-full">VIP 商業旗艦</span>
-                                        </div>
-                                        <div class="inline-block px-5 py-1.5 text-white rounded-full font-black text-xs uppercase tracking-wider mb-3 shadow-md" style="background-color: ${data.boxColors['box-about-title']};">關於我</div>
-                                        <p class="text-sm text-slate-600 leading-relaxed font-medium bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">${data.summary}</p>
-                                    </div>
-                                    <div>
-                                        <div class="inline-block px-5 py-1.5 text-white rounded-full font-black text-xs uppercase tracking-wider mb-5 shadow-md" style="background-color: ${data.boxColors['box-exp-title']};">經驗經歷</div>
-                                        <div class="space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#d48386]/40 pl-2">
-                                            ${data.experiences.map(e => `
-                                                <div class="relative pl-6">
-                                                    <span class="absolute -left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-[#2c3e50] border-2 border-white shadow-sm"></span>
-                                                    <div class="text-[11px] font-black text-[#d48386] uppercase tracking-wider mb-0.5">${e.period}</div>
-                                                    <h4 class="text-sm font-black text-slate-800 mb-1">${e.title}</h4>
-                                                    <p class="text-xs text-slate-600 leading-relaxed font-medium">${e.desc}</p>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="inline-block px-5 py-1.5 text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md" style="background-color: ${data.boxColors['box-hobby-title']};">興趣愛好</div>
-                                        <div class="grid grid-cols-3 gap-3">
-                                            ${data.hobbies.map(h => `
-                                                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center justify-center text-center">
-                                                    <div class="w-10 h-10 rounded-xl bg-[#d48386]/15 text-[#d48386] flex items-center justify-center text-lg mb-2"><i class="${h.icon}"></i></div>
-                                                    <span class="text-xs font-bold text-slate-700">${h.name}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
+                            <div class="mt-8">
+                                <div class="text-white px-6 py-3 rounded-full font-black text-center shadow-md mb-4" style="background-color: ${resumeData.themeDark || '#3b4954'};">
+                                    技能專長
                                 </div>
-                                <div class="mt-10 pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-400">
-                                    <span>企業級履歷數據管理</span>
-                                    <span>Powered by Firebase Realtime DB</span>
+                                <div class="space-y-3">
+                                    ${(resumeData.skills || []).map(skill => `
+                                        <div class="flex items-center justify-between bg-white/90 px-4 py-3 rounded-xl shadow-sm">
+                                            <span class="text-xs font-black text-slate-800">${skill.name}</span>
+                                            <div class="flex space-x-1">
+                                                ${[1, 2, 3, 4, 5].map(star => `
+                                                    <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${star <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `).join('')}
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 右側 -->
+                        <div class="flex-1 p-10 flex flex-col justify-between bg-white">
+                            <div>
+                                <div class="flex items-start justify-between border-b-2 border-slate-100 pb-6 mb-6">
+                                    <div>
+                                        <h2 class="text-4xl font-black text-slate-900 tracking-tight mb-1">${resumeData.nameZh}</h2>
+                                        <div class="text-xl font-bold text-slate-500 tracking-wide">${resumeData.nameEn}</div>
+                                    </div>
+                                </div>
+                                <div class="mb-8">
+                                    <div class="inline-block text-white px-5 py-2 rounded-full font-black text-xs shadow-md mb-3" style="background-color: ${resumeData.themeDark || '#3b4954'};">
+                                        關於我
+                                    </div>
+                                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed font-bold text-xs shadow-inner">
+                                        ${resumeData.about}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="inline-block text-white px-5 py-2 rounded-full font-black text-xs shadow-md mb-4" style="background-color: ${resumeData.themeDark || '#3b4954'};">
+                                        經驗經歷
+                                    </div>
+                                    <div class="space-y-5 border-l-2 border-slate-200 ml-3 pl-6">
+                                        ${(resumeData.experiences || []).map(exp => `
+                                            <div class="relative">
+                                                <div class="absolute -left-[35px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white" style="background-color: ${resumeData.themeDark || '#3b4954'};"></div>
+                                                <div class="text-xs font-bold" style="color: ${resumeData.themeColor \vert{}\vert{} '#d9777f'};">${exp.period}</div>
+                                                <div class="text-base font-black text-slate-900">${exp.title}</div>
+                                                <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-8 pt-4 border-t border-slate-100 text-right text-xs font-bold text-slate-400">
+                                Enterprise Business Resume System v3.2 - Fullscreen Edition
+                            </div>
+                        </div>
                     </div>
+
+                    <script>
+                        document.getElementById('downloadPngBtn').addEventListener('click', () => {
+                            const canvasEl = document.getElementById('fullResumeCanvas');
+                            html2canvas(canvasEl, { scale: 3, useCORS: true }).then(canvas => {
+                                const link = document.createElement('a');
+                                link.download = '${resumeData.nameZh}_高畫質履歷.png';
+                                link.href = canvas.toDataURL('image/png');
+                                link.click();
+                            });
+                        });
+                    <\/script>
                 </body>
                 </html>
-            `;
+            `);
+        });
 
-            newWindow.document.write(htmlContent);
-            newWindow.document.close();
-        }
-
-        window.exportHighResPNG = function() {
-            const targetEl = document.getElementById('resume-canvas');
-            if (!targetEl) return;
-            showMsg("高畫質圖片生成中", "正在以 3x 高解析度渲染 PNG 圖片，請稍候...", "success");
-            
-            html2canvas(targetEl, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'HighRes_Corporate_Resume.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                showMsg("匯出錯誤", "無法生成高畫質 PNG 圖片: " + err.message, "error");
-            });
-        }
-
-        window.addExperienceRow = function(period = "2024 - 現在", title = "資深專案經理", desc = "請輸入工作內容說明...") {
-            const container = document.getElementById('experience-forms-container');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = "experience-item bg-slate-50 p-3 rounded-xl border border-slate-200 relative space-y-2";
-            div.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <input type="text" value="${period}" placeholder="期間 (例: 2020-現在)" class="exp-period w-1/2 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
-                    <button type="button" onclick="this.closest('.experience-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <input type="text" value="${title}" placeholder="職稱" class="exp-title w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
-                <textarea rows="2" placeholder="工作敘述" class="exp-desc w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs focus:outline-none" oninput="updatePreview()">${desc}</textarea>
-            `;
-            container.appendChild(div);
-            updatePreview();
-        }
-
-        window.addSkillRow = function(name = "專案管理", rating = 5) {
-            const container = document.getElementById('skills-forms-container');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = "skill-item bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2";
-            div.innerHTML = `
-                <input type="text" value="${name}" placeholder="技能名稱" class="skill-name flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
-                <select class="skill-rating px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" onchange="updatePreview()">
-                    <option value="1" ${rating==1?'selected':''}>1分</option>
-                    <option value="2" ${rating==2?'selected':''}>2分</option>
-                    <option value="3" ${rating==3?'selected':''}>3分</option>
-                    <option value="4" ${rating==4?'selected':''}>4分</option>
-                    <option value="5" ${rating==5?'selected':''}>5分</option>
-                </select>
-                <button type="button" onclick="this.closest('.skill-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
-            `;
-            container.appendChild(div);
-            updatePreview();
-        }
-
-        window.addHobbyRow = function(name = "閱讀", icon = "fa-solid fa-book") {
-            const container = document.getElementById('hobbies-forms-container');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = "hobby-item bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2";
-            div.innerHTML = `
-                <input type="text" value="${name}" placeholder="興趣名稱" class="hobby-name flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
-                <input type="text" value="${icon}" placeholder="FontAwesome Icon" class="hobby-icon w-1/3 px-2 py-1 bg-white border border-slate-200 rounded text-xs focus:outline-none" oninput="updatePreview()">
-                <button type="button" onclick="this.closest('.hobby-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
-            `;
-            container.appendChild(div);
-            updatePreview();
-        }
-
-        window.updatePreview = function() {
-            const data = gatherFormData();
-
-            const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            setTxt('preview-name', data.name);
-            setTxt('preview-eng-name', data.engName);
-            
-            const photoEl = document.getElementById('preview-photo');
-            if(photoEl) photoEl.src = data.photo || 'https://placehold.co/300x300/d48386/ffffff?text=Photo';
-            
-            setTxt('preview-phone', data.phone);
-            setTxt('preview-email', data.email);
-            setTxt('preview-address', data.address);
-            setTxt('preview-education', data.education);
-            setTxt('preview-cert', data.cert);
-            setTxt('preview-summary', data.summary);
-
-            const skillsEl = document.getElementById('preview-skills');
-            if (skillsEl) {
-                skillsEl.innerHTML = '';
-                data.skills.forEach(s => {
-                    let dotsHtml = '';
-                    for(let i=1; i<=5; i++) {
-                        const active = i <= s.rating ? 'bg-corporate-rose' : 'bg-slate-200';
-                        dotsHtml += `<span class="w-3.5 h-3.5 rounded-full ${active} inline-block transition-all"></span>`;
-                    }
-                    skillsEl.innerHTML += `
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-slate-700">${s.name}</span>
-                            <div class="flex items-center gap-1.5">${dotsHtml}</div>
-                        </div>
-                    `;
-                });
-            }
-
-            const expEl = document.getElementById('preview-experience');
-            if (expEl) {
-                expEl.innerHTML = '';
-                data.experiences.forEach(e => {
-                    expEl.innerHTML += `
-                        <div class="relative pl-6">
-                            <span class="absolute -left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-corporate-navy border-2 border-white shadow-sm"></span>
-                            <div class="text-[11px] font-black text-corporate-rose uppercase tracking-wider mb-0.5">${e.period}</div>
-                            <h4 class="text-xs md:text-sm font-black text-slate-800 mb-1">${e.title}</h4>
-                            <p class="text-xs text-slate-600 leading-relaxed font-medium">${e.desc}</p>
-                        </div>
-                    `;
-                });
-            }
-
-            const hobbyEl = document.getElementById('preview-hobbies');
-            if (hobbyEl) {
-                hobbyEl.innerHTML = '';
-                data.hobbies.forEach(h => {
-                    hobbyEl.innerHTML += `
-                        <div class="bg-white/90 p-4 rounded-2xl shadow-sm border border-corporate-rose/20 flex flex-col items-center justify-center text-center">
-                            <div class="w-10 h-10 rounded-xl bg-corporate-rose/15 text-corporate-rose flex items-center justify-center text-lg mb-2 shadow-inner">
-                                <i class="${h.icon}"></i>
-                            </div>
-                            <span class="text-xs font-bold text-slate-700">${h.name}</span>
-                        </div>
-                    `;
-                });
-            }
-        }
-
-        window.exportToExcel = function() {
-            const data = gatherFormData();
+        exportExcelBtn.addEventListener('click', () => {
             const wb = XLSX.utils.book_new();
-
-            const basicWsData = [
-                ["欄位", "數值"],
-                ["姓名", data.name],
-                ["英文名/職稱", data.engName],
-                ["照片網址", data.photo],
-                ["電話", data.phone],
-                ["信箱", data.email],
-                ["地址", data.address],
-                ["學歷", data.education],
-                ["認證", data.cert],
-                ["關於我", data.summary]
+            
+            const basicData = [
+                { 欄位: "中文姓名", 數值: resumeData.nameZh },
+                { 欄位: "英文名/職稱", 數值: resumeData.nameEn },
+                { 欄位: "照片網址", 數值: resumeData.photoUrl },
+                { 欄位: "電話號碼", 數值: resumeData.phone },
+                { 欄位: "電子信箱", 數值: resumeData.email },
+                { 欄位: "工作室地址", 數值: resumeData.address },
+                { 欄位: "學歷背景", 數值: resumeData.education },
+                { 欄位: "認證榮譽", 數值: resumeData.certification },
+                { 欄位: "關於我", 數值: resumeData.about },
+                { 欄位: "主題色", 數值: resumeData.themeColor },
+                { 欄位: "深色調", 數值: resumeData.themeDark },
+                { 欄位: "字型比例", 數值: resumeData.fontSize }
             ];
-            const wsBasic = XLSX.utils.aoa_to_sheet(basicWsData);
+            const wsBasic = XLSX.utils.json_to_sheet(basicData);
             XLSX.utils.book_append_sheet(wb, wsBasic, "基本資料");
 
-            const expWsData = [["期間", "職稱", "工作敘述"]];
-            data.experiences.forEach(e => expWsData.push([e.period, e.title, e.desc]));
-            const wsExp = XLSX.utils.aoa_to_sheet(expWsData);
+            const wsExp = XLSX.utils.json_to_sheet(resumeData.experiences);
             XLSX.utils.book_append_sheet(wb, wsExp, "經驗經歷");
 
-            const skillWsData = [["技能名稱", "評分"]];
-            data.skills.forEach(s => skillWsData.push([s.name, s.rating]));
-            const wsSkill = XLSX.utils.aoa_to_sheet(skillWsData);
+            const wsSkill = XLSX.utils.json_to_sheet(resumeData.skills);
             XLSX.utils.book_append_sheet(wb, wsSkill, "技能專長");
 
-            const hobbyWsData = [["興趣名稱", "圖標"]];
-            data.hobbies.forEach(h => hobbyWsData.push([h.name, h.icon]));
-            const wsHobby = XLSX.utils.aoa_to_sheet(hobbyWsData);
-            XLSX.utils.book_append_sheet(wb, wsHobby, "興趣愛好");
+            XLSX.writeFile(wb, `${resumeData.nameZh}_履歷資料.xlsx`);
+        });
 
-            XLSX.writeFile(wb, "Corporate_Resume_Data.xlsx");
-            showMsg("匯出成功", "已成功將履歷資料匯出為 Excel 試算表檔案！", "success");
-        }
-
-        window.importFromExcel = function(event) {
-            const file = event.target.files[0];
+        importExcelInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-
-                    const importedData = { experiences: [], skills: [], hobbies: [] };
-
-                    if (workbook.SheetNames.includes("基本資料")) {
-                        const sheet = workbook.Sheets["基本資料"];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        for (let i = 1; i < json.length; i++) {
-                            const row = json[i];
-                            if (row[0] === "姓名") importedData.name = row[1] || "";
-                            if (row[0] === "英文名/職稱") importedData.engName = row[1] || "";
-                            if (row[0] === "照片網址") importedData.photo = row[1] || "";
-                            if (row[0] === "電話") importedData.phone = row[1] || "";
-                            if (row[0] === "信箱") importedData.email = row[1] || "";
-                            if (row[0] === "地址") importedData.address = row[1] || "";
-                            if (row[0] === "學歷") importedData.education = row[1] || "";
-                            if (row[0] === "認證") importedData.cert = row[1] || "";
-                            if (row[0] === "關於我") importedData.summary = row[1] || "";
-                        }
-                    }
-
-                    if (workbook.SheetNames.includes("經驗經歷")) {
-                        const sheet = workbook.Sheets["經驗經歷"];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        for (let i = 1; i < json.length; i++) {
-                            const row = json[i];
-                            if (row[0] || row[1]) {
-                                importedData.experiences.push({ period: row[0]||"", title: row[1]||"", desc: row[2]||"" });
-                            }
-                        }
-                    }
-
-                    if (workbook.SheetNames.includes("技能專長")) {
-                        const sheet = workbook.Sheets["技能專長"];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        for (let i = 1; i < json.length; i++) {
-                            const row = json[i];
-                            if (row[0]) {
-                                importedData.skills.push({ name: row[0], rating: parseInt(row[1])||3 });
-                            }
-                        }
-                    }
-
-                    if (workbook.SheetNames.includes("興趣愛好")) {
-                        const sheet = workbook.Sheets["興趣愛好"];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        for (let i = 1; i < json.length; i++) {
-                            const row = json[i];
-                            if (row[0]) {
-                                importedData.hobbies.push({ name: row[0], icon: row[1]||"fa-solid fa-star" });
-                            }
-                        }
-                    }
-
-                    populateForm(importedData);
-                    showMsg("匯入成功", "已成功從 Excel 檔案匯入履歷資料！", "success");
-                } catch (err) {
-                    showMsg("匯入失敗", "檔案格式錯誤或無法讀取: " + err.message, "error");
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                if (workbook.Sheets["基本資料"]) {
+                    const basicJson = XLSX.utils.sheet_to_json(workbook.Sheets["基本資料"]);
+                    basicJson.forEach(item => {
+                        if (item.欄位 === "中文姓名") resumeData.nameZh = item.數值;
+                        if (item.欄位 === "英文名/職稱") resumeData.nameEn = item.數值;
+                        if (item.欄位 === "照片網址") resumeData.photoUrl = item.數值;
+                        if (item.欄位 === "電話號碼") resumeData.phone = item.數值;
+                        if (item.欄位 === "電子信箱") resumeData.email = item.數值;
+                        if (item.欄位 === "工作室地址") resumeData.address = item.數值;
+                        if (item.欄位 === "學歷背景") resumeData.education = item.數值;
+                        if (item.欄位 === "認證榮譽") resumeData.certification = item.數值;
+                        if (item.欄位 === "關於我") resumeData.about = item.數值;
+                        if (item.欄位 === "主題色") resumeData.themeColor = item.數值;
+                        if (item.欄位 === "深色調") resumeData.themeDark = item.數值;
+                        if (item.欄位 === "字型比例") resumeData.fontSize = item.數值;
+                    });
                 }
+
+                if (workbook.Sheets["經驗經歷"]) {
+                    resumeData.experiences = XLSX.utils.sheet_to_json(workbook.Sheets["經驗經歷"]);
+                }
+
+                if (workbook.Sheets["技能專長"]) {
+                    resumeData.skills = XLSX.utils.sheet_to_json(workbook.Sheets["技能專長"]);
+                }
+
+                updateUIFromData();
+                saveDataToFirebase();
+                alert("Excel 資料成功匯入並同步！");
             };
             reader.readAsArrayBuffer(file);
-            event.target.value = '';
-        }
+        });
 
-        window.showMsg = function(title, text, type = "success") {
-            const titleEl = document.getElementById('msg-title');
-            const textEl = document.getElementById('msg-text');
-            const iconEl = document.getElementById('msg-icon');
-            const modalEl = document.getElementById('msg-modal');
-            
-            if(titleEl) titleEl.innerText = title;
-            if(textEl) textEl.innerText = text;
-            if (iconEl) {
-                if (type === "success") {
-                    iconEl.className = "w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-4";
-                    iconEl.innerHTML = '<i class="fa-solid fa-check"></i>';
-                } else {
-                    iconEl.className = "w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto mb-4";
-                    iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-                }
-            }
-            if(modalEl) modalEl.classList.remove('hidden');
-        }
-
-        window.closeMsgModal = function() {
-            const modalEl = document.getElementById('msg-modal');
-            if(modalEl) modalEl.classList.add('hidden');
-        }
-
-        window.onload = function() {
-            populateForm(defaultResumeData);
-        }
     </script>
 </body>
 </html>
