@@ -126,7 +126,7 @@
                     <input type="range" id="fontSizeRange" min="80" max="140" value="100" class="w-28 accent-amber-500 cursor-pointer">
                     <span id="fontSizeVal">100%</span>
                 </div>
-                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info mr-1"></i>雙擊任意框格自選10種顏色</span>
+                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info mr-1"></i>雙擊圖片可開啟連結</span>
             </div>
 
             <!-- 表單輸入群組 -->
@@ -179,7 +179,7 @@
                     <textarea id="inputAbout" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white font-bold focus:border-rose-500 focus:outline-none resize-none">博波邛爵隩驛介一清癲莫坑丸柜于，嚙稷汀沐秘舉狨王于盼駟之馘截。毋炆樞椴始龢停疇癲忙虹洞她興沌滲忑茨鏇茲竅笥。尤俐逃綜捋闕督蓋酋濘曝沄佈机喨蔥兀渫純凝瑄。仿壆郁淬恐鸛菹昊汰挑疤芙於筆毛幼賬陳。右郡捺揆局鴆城漫而吁吊哢神紡那幫于畀魅簪。</textarea>
                 </div>
 
-                <!-- 經驗經歷 -->
+                <!-- 經驗經歷 (包含日期選擇、公司、圖片連結) -->
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between border-b border-slate-700 pb-1">
                         <h3 class="text-rose-400 font-black uppercase text-[11px] tracking-wider">經驗經歷</h3>
@@ -211,7 +211,7 @@
                     <i class="fa-solid fa-eye text-sky-400 mr-2"></i>大型個人詳細履歷表預覽 (LIVE PREVIEW)
                 </h2>
                 <div class="flex items-center space-x-2">
-                    <span class="text-xs text-amber-300 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>雙擊任意框格自選10種顏色</span>
+                    <span class="text-xs text-amber-300 font-bold"><i class="fa-solid fa-hand-pointer mr-1"></i>雙擊公司圖片可開啟超連結</span>
                 </div>
             </div>
 
@@ -221,10 +221,10 @@
                 <!-- 履歷主體紙張 (模擬精美排版) -->
                 <div id="resumeCanvas" class="w-full max-w-[800px] bg-white text-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative transition-all duration-200" style="font-size: 16px;">
                     
-                    <!-- 左側欄位 (粉色區塊 - 可自訂顏色) -->
+                    <!-- 左側欄位 -->
                     <div id="themeLeftCol" class="w-full md:w-[320px] p-8 flex flex-col justify-between shrink-0 transition-colors duration-200" style="background-color: #d9777f;">
                         <div>
-                            <!-- 頭像框 (可自訂顏色) -->
+                            <!-- 頭像框 -->
                             <div id="themePhotoBox" class="w-48 h-48 mx-auto rounded-3xl shadow-lg overflow-hidden border-4 border-white mb-8 bg-white flex items-center justify-center transition-colors duration-200">
                                 <img id="prevPhoto" src="" alt="Photo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d8773'">
                             </div>
@@ -254,7 +254,7 @@
                             </div>
                         </div>
 
-                        <!-- 技能專長區塊 (左側下方) -->
+                        <!-- 技能專長區塊 -->
                         <div class="mt-8">
                             <div id="themeSkillHeader" class="text-white px-6 py-2.5 rounded-full font-black text-center shadow-md mb-4 transition-colors duration-200" style="background-color: #3b4954;">
                                 技能專長
@@ -268,7 +268,7 @@
                     <!-- 右側欄位 (白色主區塊) -->
                     <div class="flex-1 p-8 flex flex-col justify-between bg-white">
                         <div>
-                            <!-- 姓名與職稱 (優化排版) -->
+                            <!-- 姓名與職稱 -->
                             <div class="flex items-start justify-between border-b-2 border-slate-100 pb-6 mb-6">
                                 <div>
                                     <h2 id="prevNameZh" class="text-3xl font-black text-slate-900 tracking-tight mb-1">劉金勳</h2>
@@ -291,7 +291,7 @@
                                 <div id="themeExpTag" class="inline-block text-white px-5 py-1.5 rounded-full font-black text-xs shadow-md mb-4 transition-colors duration-200" style="background-color: #3b4954;">
                                     經驗經歷
                                 </div>
-                                <div id="prevExperienceContainer" class="space-y-4 border-l-2 border-slate-200 ml-3 pl-6">
+                                <div id="prevExperienceContainer" class="space-y-5 border-l-2 border-slate-200 ml-3 pl-6">
                                     <!-- 動態生成經驗經歷 -->
                                 </div>
                             </div>
@@ -325,7 +325,6 @@
     <script type="module">
         const { auth, db, ref, set, get, onValue, update, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window.firebaseApp;
 
-        // 10種專業商業配色
         const corporateColors = [
             { name: "尊爵玫瑰", hex: "#d9777f", dark: "#3b4954" },
             { name: "極光墨綠", hex: "#10b981", dark: "#064e3b" },
@@ -339,7 +338,6 @@
             { name: "時尚魅紫", hex: "#d946ef", dark: "#701a75" }
         ];
 
-        // 預設資料狀態
         let resumeData = {
             nameZh: "劉金勳",
             nameEn: "Jacky_Liu",
@@ -354,8 +352,8 @@
             themeDark: "#3b4954",
             fontSize: 100,
             experiences: [
-                { period: "2024 - 現在", title: "資深專案經理", desc: "請輸入工作內容說明..." },
-                { period: "2021 - 2024", title: "高級技術顧問", desc: "主導跨國製造業系統數位轉型與產線升級。" }
+                { startMonth: "2024-01", isCurrent: true, endMonth: "", company: "翔名科技股份有限公司", title: "資深專案經理", desc: "主導跨國製造業系統數位轉型與產線升級。", imgUrl: "https://cdn-icons-png.flaticon.com/512/4300/4300058.png", linkUrl: "https://www.google.com" },
+                { startMonth: "2013-12", isCurrent: false, endMonth: "2019-01", company: "艾美工作室", title: "高級技術顧問", desc: "負責全球製造廠自動化設備維護與評估計畫。", imgUrl: "", linkUrl: "" }
             ],
             skills: [
                 { name: "英語", level: 5 },
@@ -383,7 +381,6 @@
         const fontSizeRange = document.getElementById('fontSizeRange');
         const fontSizeVal = document.getElementById('fontSizeVal');
 
-        // 輸入欄位
         const inputNameZh = document.getElementById('inputNameZh');
         const inputNameEn = document.getElementById('inputNameEn');
         const inputPhotoUrl = document.getElementById('inputPhotoUrl');
@@ -399,7 +396,6 @@
         const skillsListContainer = document.getElementById('skillsListContainer');
         const addSkillBtn = document.getElementById('addSkillBtn');
 
-        // 預覽元素
         const resumeCanvas = document.getElementById('resumeCanvas');
         const prevNameZh = document.getElementById('prevNameZh');
         const prevNameEn = document.getElementById('prevNameEn');
@@ -413,7 +409,6 @@
         const prevExperienceContainer = document.getElementById('prevExperienceContainer');
         const prevSkillsContainer = document.getElementById('prevSkillsContainer');
 
-        // 顏色選擇彈窗
         const colorPickerModal = document.getElementById('colorPickerModal');
         const colorPaletteGrid = document.getElementById('colorPaletteGrid');
         const closeColorModal = document.getElementById('closeColorModal');
@@ -486,11 +481,17 @@
             resumeData.certification = inputCertification.value;
             resumeData.about = inputAbout.value;
 
+            // 收集經歷（含年月選擇器與公司、圖片超連結）
             const expRows = document.querySelectorAll('.exp-row');
             resumeData.experiences = Array.from(expRows).map(row => ({
-                period: row.querySelector('.exp-period').value,
+                startMonth: row.querySelector('.exp-start-month').value,
+                isCurrent: row.querySelector('.exp-is-current').checked,
+                endMonth: row.querySelector('.exp-end-month').value,
+                company: row.querySelector('.exp-company').value,
                 title: row.querySelector('.exp-title').value,
-                desc: row.querySelector('.exp-desc').value
+                desc: row.querySelector('.exp-desc').value,
+                imgUrl: row.querySelector('.exp-img-url').value,
+                linkUrl: row.querySelector('.exp-link-url').value
             }));
 
             const skillRows = document.querySelectorAll('.skill-row');
@@ -519,6 +520,16 @@
             renderPreview();
         }
 
+        function formatPeriodText(exp) {
+            const start = exp.startMonth ? exp.startMonth.replace('-', '/') : '';
+            if (exp.isCurrent) {
+                return start ? `${start} - 至今` : '至今';
+            }
+            const end = exp.endMonth ? exp.endMonth.replace('-', '/') : '';
+            if (start && end) return `${start} - ${end}`;
+            return start || end || '';
+        }
+
         function renderPreview() {
             prevNameZh.textContent = resumeData.nameZh;
             prevNameEn.textContent = resumeData.nameEn;
@@ -543,14 +554,27 @@
             document.getElementById('themeAboutTag').style.backgroundColor = darkColor;
             document.getElementById('themeExpTag').style.backgroundColor = darkColor;
 
-            prevExperienceContainer.innerHTML = (resumeData.experiences || []).map(exp => `
-                <div class="relative">
-                    <div class="absolute -left-[31px] top-1 w-3 h-3 rounded-full border-2 border-white" style="background-color: ${darkColor};"></div>
-                    <div class="text-[11px] font-bold" style="color: ${primaryColor};">${exp.period}</div>
-                    <div class="text-sm font-black text-slate-900">${exp.title}</div>
-                    <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
-                </div>
-            `).join('');
+            // 渲染預覽經歷（含公司、時間、圖片與雙擊開啟連結功能）
+            prevExperienceContainer.innerHTML = (resumeData.experiences || []).map(exp => {
+                const periodText = formatPeriodText(exp);
+                const link = exp.linkUrl || exp.imgUrl || '#';
+                const imgHtml = exp.imgUrl ? `
+                    <div class="mt-2">
+                        <img src="${exp.imgUrl}" alt="Company logo" class="h-12 w-auto max-w-[140px] object-contain rounded-lg border border-slate-200 bg-white p-1 cursor-pointer hover:opacity-80 transition shadow-sm" title="雙擊可在新分頁開啟連結" ondblclick="if('${link}' !== '#') window.open('${link}', '_blank')">
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="relative">
+                        <div class="absolute -left-[31px] top-1 w-3 h-3 rounded-full border-2 border-white" style="background-color: ${darkColor};"></div>
+                        <div class="text-[11px] font-bold" style="color: ${primaryColor};">${periodText}</div>
+                        <div class="text-sm font-black text-slate-900">${exp.title || ''}</div>
+                        ${exp.company ? `<div class="text-xs font-bold text-slate-700 flex items-center space-x-1"><i class="fa-solid fa-building text-slate-400"></i><span>${exp.company}</span></div>` : ''}
+                        <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc || ''}</div>
+                        ${imgHtml}
+                    </div>
+                `;
+            }).join('');
 
             prevSkillsContainer.innerHTML = (resumeData.skills || []).map(skill => `
                 <div class="flex items-center justify-between bg-white/80 px-4 py-2.5 rounded-xl shadow-sm">
@@ -568,15 +592,56 @@
             }
         }
 
+        // 渲染編輯器中的經歷表單（標準年月選擇器）
         function renderExperienceEditor() {
             experienceListContainer.innerHTML = (resumeData.experiences || []).map((exp, idx) => `
                 <div class="exp-row bg-slate-900 border border-slate-700 p-3 rounded-xl space-y-2 relative group">
                     <button type="button" onclick="window.removeExperience(${idx})" class="absolute top-2 right-2 text-rose-400 hover:text-rose-300 text-xs"><i class="fa-solid fa-trash"></i></button>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" class="exp-period bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.period}" placeholder="年份 (例: 2024 - 現在)">
-                        <input type="text" class="exp-title bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.title}" placeholder="職稱">
+
+                    <!-- 年月選擇器與至今開關 -->
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-5">
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">開始年月</label>
+                            <input type="month" class="exp-start-month w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.startMonth || ''}">
+                        </div>
+                        <div class="col-span-5">
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">結束年月</label>
+                            <input type="month" class="exp-end-month w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs ${exp.isCurrent ? 'opacity-30 pointer-events-none' : ''}" value="${exp.endMonth || ''}">
+                        </div>
+                        <div class="col-span-2 text-center pt-3">
+                            <label class="inline-flex items-center space-x-1 cursor-pointer">
+                                <input type="checkbox" class="exp-is-current accent-rose-500 rounded" ${exp.isCurrent ? 'checked' : ''} onchange="this.closest('.exp-row').querySelector('.exp-end-month').classList.toggle('opacity-30', this.checked); this.closest('.exp-row').querySelector('.exp-end-month').classList.toggle('pointer-events-none', this.checked);">
+                                <span class="text-[10px] font-bold text-slate-300">至今</span>
+                            </label>
+                        </div>
                     </div>
-                    <textarea class="exp-desc w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs resize-none" rows="2" placeholder="工作說明">${exp.desc}</textarea>
+
+                    <!-- 公司名稱與職稱 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">所在公司 / 單位</label>
+                            <input type="text" class="exp-company w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.company || ''}" placeholder="例如: 翔名科技">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">擔任職稱</label>
+                            <input type="text" class="exp-title w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.title || ''}" placeholder="例如: 廠長 / 經理">
+                        </div>
+                    </div>
+
+                    <!-- 公司 Logo 網址與雙擊連結地點 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">公司 Logo/圖片 URL</label>
+                            <input type="text" class="exp-img-url w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.imgUrl || ''}" placeholder="https://...">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-bold mb-0.5">雙擊圖片開啟網址 (Link)</label>
+                            <input type="text" class="exp-link-url w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs" value="${exp.linkUrl || ''}" placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <!-- 工作內容 -->
+                    <textarea class="exp-desc w-full bg-slate-800 border border-slate-700 rounded p-1.5 text-white font-bold text-xs resize-none" rows="2" placeholder="工作內容說明">${exp.desc || ''}</textarea>
                 </div>
             `).join('');
             attachInputListeners();
@@ -625,7 +690,16 @@
 
         addExpBtn.addEventListener('click', () => {
             if (!resumeData.experiences) resumeData.experiences = [];
-            resumeData.experiences.push({ period: "2026 - 現在", title: "新職稱", desc: "請輸入工作內容說明..." });
+            resumeData.experiences.push({
+                startMonth: "2026-01",
+                isCurrent: true,
+                endMonth: "",
+                company: "新公司",
+                title: "新職稱",
+                desc: "請輸入工作內容說明...",
+                imgUrl: "",
+                linkUrl: ""
+            });
             updateUIFromData();
         });
 
@@ -643,7 +717,7 @@
 
         document.addEventListener('dblclick', (e) => {
             const box = e.target.closest('#resumeCanvas > div, #themeLeftCol, #themePhotoBox, #themeSkillHeader, #themeAboutTag, #themeExpTag');
-            if (box) {
+            if (box && !e.target.closest('img')) {
                 activeTargetElementKey = box.id;
                 openColorModalFn();
             }
@@ -670,6 +744,7 @@
             saveDataToFirebase();
         };
 
+        // 獨立全螢幕預覽與 PNG 匯出
         openFullScreenBtn.addEventListener('click', () => {
             const newWindow = window.open('', '_blank');
             const skillsHtml = (resumeData.skills || []).map(skill => `
@@ -685,14 +760,26 @@
                 </div>
             `).join('');
 
-            const expHtml = (resumeData.experiences || []).map(exp => `
-                <div class="relative">
-                    <div class="absolute -left-[35px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white" style="background-color: ${resumeData.themeDark || '#3b4954'};"></div>
-                    <div class="text-xs font-bold" style="color: ${resumeData.themeColor || '#d9777f'};">${exp.period}</div>
-                    <div class="text-base font-black text-slate-900">${exp.title}</div>
-                    <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
-                </div>
-            `).join('');
+            const expHtml = (resumeData.experiences || []).map(exp => {
+                const periodText = formatPeriodText(exp);
+                const link = exp.linkUrl || exp.imgUrl || '#';
+                const imgHtml = exp.imgUrl ? `
+                    <div class="mt-2">
+                        <img src="${exp.imgUrl}" class="h-12 w-auto max-w-[140px] object-contain rounded-lg border border-slate-200 bg-white p-1 cursor-pointer" title="雙擊可開啟連結" ondblclick="if('${link}' !== '#') window.open('${link}', '_blank')">
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="relative">
+                        <div class="absolute -left-[35px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white" style="background-color: ${resumeData.themeDark || '#3b4954'};"></div>
+                        <div class="text-xs font-bold" style="color: ${resumeData.themeColor || '#d9777f'};">${periodText}</div>
+                        <div class="text-base font-black text-slate-900">${exp.title || ''}</div>
+                        ${exp.company ? `<div class="text-xs font-bold text-slate-700"><i class="fa-solid fa-building text-slate-400 mr-1"></i>${exp.company}</div>` : ''}
+                        <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc || ''}</div>
+                        ${imgHtml}
+                    </div>
+                `;
+            }).join('');
 
             const htmlContent = `
                 <!DOCTYPE html>
@@ -807,6 +894,7 @@
             newWindow.document.close();
         });
 
+        // 匯出 Excel
         exportExcelBtn.addEventListener('click', () => {
             const wb = XLSX.utils.book_new();
             
@@ -827,15 +915,16 @@
             const wsBasic = XLSX.utils.json_to_sheet(basicData);
             XLSX.utils.book_append_sheet(wb, wsBasic, "基本資料");
 
-            const wsExp = XLSX.utils.json_to_sheet(resumeData.experiences);
+            const wsExp = XLSX.utils.json_to_sheet(resumeData.experiences || []);
             XLSX.utils.book_append_sheet(wb, wsExp, "經驗經歷");
 
-            const wsSkill = XLSX.utils.json_to_sheet(resumeData.skills);
+            const wsSkill = XLSX.utils.json_to_sheet(resumeData.skills || []);
             XLSX.utils.book_append_sheet(wb, wsSkill, "技能專長");
 
             XLSX.writeFile(wb, `${resumeData.nameZh}_履歷資料.xlsx`);
         });
 
+        // 匯入 Excel
         importExcelInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
