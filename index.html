@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS (XLSX) for Excel Export/Import -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- html2canvas for PNG Export -->
+    <!-- html2canvas for High-Res PNG Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <script>
@@ -117,6 +117,51 @@
         </div>
     </div>
 
+    <!-- Color Picker Modal (Double-Click Box Customization) -->
+    <div id="color-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-slate-100 text-center">
+            <h3 class="text-lg font-black text-slate-800 mb-1">自訂外框顏色</h3>
+            <p class="text-xs text-slate-500 mb-4">請從以下 10 種專業企業色系中選擇一款：</p>
+            <div id="color-palette-grid" class="grid grid-cols-5 gap-3 mb-6">
+                <!-- 10 Color Swatches -->
+                <button onclick="applyBoxColor('#d48386')" class="w-12 h-12 rounded-xl bg-[#d48386] shadow-md hover:scale-105 transition-transform border-2 border-white" title="玫瑰金"></button>
+                <button onclick="applyBoxColor('#2c3e50')" class="w-12 h-12 rounded-xl bg-[#2c3e50] shadow-md hover:scale-105 transition-transform border-2 border-white" title="海軍藍"></button>
+                <button onclick="applyBoxColor('#1e293b')" class="w-12 h-12 rounded-xl bg-[#1e293b] shadow-md hover:scale-105 transition-transform border-2 border-white" title="深石墨灰"></button>
+                <button onclick="applyBoxColor('#0f766e')" class="w-12 h-12 rounded-xl bg-[#0f766e] shadow-md hover:scale-105 transition-transform border-2 border-white" title="深青綠"></button>
+                <button onclick="applyBoxColor('#166534')" class="w-12 h-12 rounded-xl bg-[#166534] shadow-md hover:scale-105 transition-transform border-2 border-white" title="森林綠"></button>
+                <button onclick="applyBoxColor('#9a3412')" class="w-12 h-12 rounded-xl bg-[#9a3412] shadow-md hover:scale-105 transition-transform border-2 border-white" title="磚紅栗色"></button>
+                <button onclick="applyBoxColor('#581c87')" class="w-12 h-12 rounded-xl bg-[#581c87] shadow-md hover:scale-105 transition-transform border-2 border-white" title="皇家紫"></button>
+                <button onclick="applyBoxColor('#0369a1')" class="w-12 h-12 rounded-xl bg-[#0369a1] shadow-md hover:scale-105 transition-transform border-2 border-white" title="鋼青藍"></button>
+                <button onclick="applyBoxColor('#b45309')" class="w-12 h-12 rounded-xl bg-[#b45309] shadow-md hover:scale-105 transition-transform border-2 border-white" title="琥珀金"></button>
+                <button onclick="applyBoxColor('#334155')" class="w-12 h-12 rounded-xl bg-[#334155] shadow-md hover:scale-105 transition-transform border-2 border-white" title="經典暗灰"></button>
+            </div>
+            <button onclick="closeColorModal()" class="w-full py-2.5 bg-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-300 transition-all">取消</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen Immersive Resume Modal / Overlay -->
+    <div id="fullscreen-modal" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md hidden flex flex-col overflow-y-auto">
+        <div class="sticky top-0 z-20 bg-slate-900/90 text-white px-6 py-4 flex items-center justify-between border-b border-slate-700 shadow-lg">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-expand text-corporate-rose text-xl"></i>
+                <h2 class="font-bold text-lg">獨立滿版全螢幕履歷大視窗</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="exportHighResPNG()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-image"></i> 一鍵匯出高畫質 PNG
+                </button>
+                <button onclick="closeFullscreenModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold transition-all">
+                    <i class="fa-solid fa-xmark"></i> 關閉全螢幕
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 p-6 flex justify-center items-start">
+            <div id="fullscreen-resume-container" class="w-full max-w-4xl transform scale-100 origin-top">
+                <!-- Cloned or rendered full resume canvas -->
+            </div>
+        </div>
+    </div>
+
     <!-- Top Navigation Bar -->
     <header class="bg-corporate-navy text-white shadow-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -172,7 +217,7 @@
                 </div>
             </div>
 
-            <!-- Toolbar for Excel & PNG -->
+            <!-- Toolbar for Excel, Font Size & Fullscreen -->
             <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2">
                     <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
@@ -183,9 +228,23 @@
                         <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
                     </label>
                 </div>
-                <button onclick="exportToPNG()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-                    <i class="fa-solid fa-image"></i> 一鍵匯出 PNG
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openFullscreenModal()" class="px-3 py-1.5 bg-corporate-navy hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-expand"></i> 全螢幕檢視
+                    </button>
+                    <button onclick="exportHighResPNG()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-image"></i> 匯出 PNG
+                    </button>
+                </div>
+            </div>
+
+            <!-- Font Size Adjuster Toolbar -->
+            <div class="bg-amber-50 px-6 py-2.5 border-b border-amber-100 flex items-center justify-between text-xs font-bold text-amber-900">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-text-height"></i> 字型大小調整:</span>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="font-size-slider" min="85" max="130" value="100" oninput="changeFontSize(this.value)" class="w-32 accent-corporate-navy">
+                    <span id="font-size-label" class="w-10 text-right">100%</span>
+                </div>
             </div>
 
             <!-- Form Fields Container -->
@@ -198,22 +257,26 @@
                     </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">姓名 (中/英文)</label>
-                            <input type="text" id="input-name" value="盧麗思" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">姓名 (中文)</label>
+                            <input type="text" id="input-name" value="劉金勳" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">照片圖片網址 (URL)</label>
-                            <input type="text" id="input-photo" value="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">英文名 / 職稱 (English)</label>
+                            <input type="text" id="input-eng-name" value="Jacky_Liu" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">照片圖片網址 (URL)</label>
+                        <input type="text" id="input-photo" value="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">電話號碼</label>
-                            <input type="text" id="input-phone" value="(091) -122-565454-651" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                            <input type="text" id="input-phone" value="(886) 921502352" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">電子信箱</label>
-                            <input type="email" id="input-email" value="EmmyC@vp.com" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                            <input type="email" id="input-email" value="n1693131@gmail.com" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -290,35 +353,35 @@
             </div>
         </section>
 
-        <!-- Right Column: Large Detailed Resume Preview (7 cols) -->
+        <!-- Right Column: Detailed Resume Preview (7 cols) -->
         <section class="lg:col-span-7 flex flex-col items-center">
             <div class="w-full flex items-center justify-between mb-3 px-2">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                     <i class="fa-solid fa-eye text-corporate-rose"></i> 大型個人詳細履歷表預覽 (Live Preview)
                 </span>
-                <span class="text-xs text-slate-400 font-medium">企業商業旗艦版</span>
+                <span class="text-xs text-slate-400 font-medium">提示: 雙擊任意框格可自訂顏色</span>
             </div>
 
             <!-- Resume Canvas Card (Target for PNG Export) -->
-            <div id="resume-canvas" class="w-full bg-[#fdfbfb] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative font-sans text-slate-800" style="min-height: 1100px;">
+            <div id="resume-canvas" class="resume-wrapper w-full bg-[#fdfbfb] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative font-sans text-slate-800 transition-all duration-300" style="min-height: 1100px;">
                 
                 <!-- Background split layout resembling reference image -->
-                <div class="absolute top-0 left-0 w-full md:w-[38%] h-full bg-corporate-rose/15 pointer-events-none"></div>
+                <div id="box-bg-left" ondblclick="openColorModal('box-bg-left')" class="absolute top-0 left-0 w-full md:w-[38%] h-full bg-corporate-rose/15 pointer-events-auto cursor-pointer transition-colors" title="雙擊更改左側背景色"></div>
 
                 <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 min-h-[1100px]">
                     
-                    <!-- Left Sidebar (4.5 cols on md) -->
-                    <div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-between border-r border-corporate-rose/20 bg-corporate-rose/5">
+                    <!-- Left Sidebar (5 cols on md) -->
+                    <div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-between border-r border-corporate-rose/20 bg-transparent">
                         <div class="space-y-8">
                             <!-- Hexagon / Photo Frame -->
                             <div class="flex flex-col items-center">
-                                <div class="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-white mb-6 relative transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                                <div id="box-photo" ondblclick="openColorModal('box-photo')" class="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-white mb-6 relative transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer" title="雙擊更改照片外框">
                                     <img id="preview-photo" src="" alt="Avatar" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/d48386/ffffff?text=Photo'">
                                 </div>
                             </div>
 
                             <!-- Contact Info Section -->
-                            <div class="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20">
+                            <div id="box-contact" ondblclick="openColorModal('box-contact')" class="space-y-4 bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20 cursor-pointer hover:border-corporate-rose transition-colors" title="雙擊更改聯絡資訊框顏色">
                                 <div class="flex items-start gap-3">
                                     <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
                                         <i class="fa-solid fa-phone text-xs"></i>
@@ -368,10 +431,10 @@
 
                             <!-- Skills Section -->
                             <div>
-                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md">
+                                <div id="box-skills-title" ondblclick="openColorModal('box-skills-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改技能標題顏色">
                                     技能專長
                                 </div>
-                                <div id="preview-skills" class="space-y-3 bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20">
+                                <div id="box-skills" ondblclick="openColorModal('box-skills')" class="space-y-3 bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20 cursor-pointer hover:border-corporate-rose transition-colors" title="雙擊更改技能區塊顏色">
                                     <!-- Dynamic Skills Render -->
                                 </div>
                             </div>
@@ -383,26 +446,29 @@
                     </div>
 
                     <!-- Right Main Section (7 cols on md) -->
-                    <div class="md:col-span-7 p-6 md:p-10 flex flex-col justify-between bg-white">
+                    <div class="md:col-span-7 p-6 md:p-10 flex flex-col justify-between bg-transparent">
                         <div class="space-y-8">
                             
                             <!-- Header Name & About Me -->
                             <div>
-                                <div class="flex items-baseline justify-between mb-4">
-                                    <h1 id="preview-name" class="text-3xl md:text-5xl font-black text-corporate-navy tracking-tight"></h1>
-                                    <span class="text-xs font-extrabold px-3 py-1 bg-corporate-rose/20 text-corporate-rose rounded-full">VIP 商業旗艦</span>
+                                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-200 gap-4">
+                                    <div>
+                                        <h1 id="preview-name" class="text-3xl md:text-4xl font-black text-corporate-navy tracking-tight leading-tight"></h1>
+                                        <div id="preview-eng-name" class="text-sm md:text-base font-bold text-slate-500 tracking-wider mt-1"></div>
+                                    </div>
+                                    <span class="self-start md:self-auto text-xs font-extrabold px-3.5 py-1.5 bg-corporate-rose/20 text-corporate-rose rounded-full shadow-sm">VIP 商業旗艦</span>
                                 </div>
 
-                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-3 shadow-md">
+                                <div id="box-about-title" ondblclick="openColorModal('box-about-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-3 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改關於我標題顏色">
                                     關於我
                                 </div>
-                                <p id="preview-summary" class="text-xs md:text-sm text-slate-600 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p id="preview-summary" class="text-xs md:text-sm text-slate-600 leading-relaxed font-medium bg-white/90 p-4 rounded-2xl border border-slate-200/80 shadow-sm">
                                 </p>
                             </div>
 
                             <!-- Experience Timeline Section -->
                             <div>
-                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-5 shadow-md">
+                                <div id="box-exp-title" ondblclick="openColorModal('box-exp-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-5 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改經驗標題顏色">
                                     經驗經歷
                                 </div>
                                 <div id="preview-experience" class="space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-corporate-rose/40 pl-2">
@@ -412,7 +478,7 @@
 
                             <!-- Hobbies & Interests Section -->
                             <div>
-                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md">
+                                <div id="box-hobby-title" ondblclick="openColorModal('box-hobby-title')" class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md cursor-pointer hover:opacity-90 transition-opacity" title="雙擊更改興趣標題顏色">
                                     興趣愛好
                                 </div>
                                 <div id="preview-hobbies" class="grid grid-cols-3 gap-3">
@@ -422,7 +488,7 @@
 
                         </div>
 
-                        <div class="mt-10 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                        <div class="mt-10 pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-400">
                             <span>企業級履歷數據管理</span>
                             <span>Powered by Firebase Realtime DB</span>
                         </div>
@@ -459,34 +525,46 @@
 
         let currentUser = null;
         let isOnline = navigator.onLine;
+        let activeColorTargetId = null;
 
         // Default Sample Data
         const defaultResumeData = {
-            name: "盧麗思",
+            name: "劉金勳",
+            engName: "Jacky_Liu",
             photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
-            phone: "(091) -122-565454-651",
-            email: "EmmyC@vp.com",
+            phone: "(886) 921502352",
+            email: "n1693131@gmail.com",
             address: "艾美工作室 紐約市123街",
             education: "香港浸會大學 文學學士 (榮譽) 在多媒體",
             cert: "認證領導顧問",
             summary: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。尢猁逃綜捊闞眢藎酋泞忁沄佈杌嗹蔥兀莯紲凝渲。仿垠郗淬恐鸛菹狊汏挑疕芙於笮毛纫蚅賬陳。冇郡哈揆局鴞堿漫而吁吊哢神紡邴幫亍畀魅挐。",
             experiences: [
-                { period: "2006 - 現在", title: "銷售團隊負責人", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
-                { period: "2003 - 2006", title: "銷售經理", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
-                { period: "2003 - 2006", title: "營業員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
-                { period: "2003 - 2006", title: "服務員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" }
+                { period: "2006 - 現在", title: "銷售團隊負責人", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" },
+                { period: "2003 - 2006", title: "銷售經理", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" },
+                { period: "2003 - 2006", title: "營業員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。" }
             ],
             skills: [
                 { name: "英語", rating: 4 },
                 { name: "法語", rating: 4 },
                 { name: "德語", rating: 4 },
-                { name: "中文", rating: 4 }
+                { name: "中文", rating: 5 }
             ],
             hobbies: [
                 { name: "保齡球", icon: "fa-solid fa-bowling-ball" },
                 { name: "籃球", icon: "fa-solid fa-basketball" },
                 { name: "溜冰", icon: "fa-solid fa-person-skating" }
-            ]
+            ],
+            boxColors: {
+                "box-bg-left": "rgba(212, 131, 134, 0.15)",
+                "box-photo": "#ffffff",
+                "box-contact": "#ffffff",
+                "box-skills": "#ffffff",
+                "box-skills-title": "#2c3e50",
+                "box-about-title": "#2c3e50",
+                "box-exp-title": "#2c3e50",
+                "box-hobby-title": "#2c3e50"
+            },
+            fontSizeScale: 100
         };
 
         // Network status monitor
@@ -591,7 +669,6 @@
                 if (val) {
                     populateForm(val);
                 } else {
-                    // Populate default if first time
                     populateForm(defaultResumeData);
                     saveToFirebase();
                 }
@@ -605,6 +682,7 @@
         // Populate Form from JSON object
         function populateForm(data) {
             document.getElementById('input-name').value = data.name || '';
+            document.getElementById('input-eng-name').value = data.engName || '';
             document.getElementById('input-photo').value = data.photo || '';
             document.getElementById('input-phone').value = data.phone || '';
             document.getElementById('input-email').value = data.email || '';
@@ -612,6 +690,15 @@
             document.getElementById('input-education').value = data.education || '';
             document.getElementById('input-cert').value = data.cert || '';
             document.getElementById('input-summary').value = data.summary || '';
+
+            if (data.fontSizeScale) {
+                document.getElementById('font-size-slider').value = data.fontSizeScale;
+                changeFontSize(data.fontSizeScale, false);
+            }
+
+            if (data.boxColors) {
+                applySavedBoxColors(data.boxColors);
+            }
 
             // Experiences
             const expContainer = document.getElementById('experience-forms-container');
@@ -641,6 +728,7 @@
         function gatherFormData() {
             const data = {
                 name: document.getElementById('input-name').value,
+                engName: document.getElementById('input-eng-name').value,
                 photo: document.getElementById('input-photo').value,
                 phone: document.getElementById('input-phone').value,
                 email: document.getElementById('input-email').value,
@@ -648,6 +736,8 @@
                 education: document.getElementById('input-education').value,
                 cert: document.getElementById('input-cert').value,
                 summary: document.getElementById('input-summary').value,
+                fontSizeScale: parseInt(document.getElementById('font-size-slider').value),
+                boxColors: getCurrentBoxColors(),
                 experiences: [],
                 skills: [],
                 hobbies: []
@@ -676,6 +766,112 @@
             });
 
             return data;
+        }
+
+        function getCurrentBoxColors() {
+            return {
+                "box-bg-left": document.getElementById('box-bg-left').style.backgroundColor || 'rgba(212, 131, 134, 0.15)',
+                "box-photo": document.getElementById('box-photo').style.backgroundColor || '#ffffff',
+                "box-contact": document.getElementById('box-contact').style.backgroundColor || '#ffffff',
+                "box-skills": document.getElementById('box-skills').style.backgroundColor || '#ffffff',
+                "box-skills-title": document.getElementById('box-skills-title').style.backgroundColor || '#2c3e50',
+                "box-about-title": document.getElementById('box-about-title').style.backgroundColor || '#2c3e50',
+                "box-exp-title": document.getElementById('box-exp-title').style.backgroundColor || '#2c3e50',
+                "box-hobby-title": document.getElementById('box-hobby-title').style.backgroundColor || '#2c3e50'
+            };
+        }
+
+        function applySavedBoxColors(colors) {
+            for (const [id, color] of Object.entries(colors)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === 'box-bg-left') {
+                        el.style.backgroundColor = color;
+                    } else if (id.includes('title')) {
+                        el.style.backgroundColor = color;
+                    } else {
+                        el.style.backgroundColor = color;
+                    }
+                }
+            }
+        }
+
+        // Double-Click Color Customization
+        window.openColorModal = function(boxId) {
+            activeColorTargetId = boxId;
+            document.getElementById('color-modal').classList.remove('hidden');
+        }
+
+        window.closeColorModal = function() {
+            document.getElementById('color-modal').classList.add('hidden');
+            activeColorTargetId = null;
+        }
+
+        window.applyBoxColor = function(colorHex) {
+            if (!activeColorTargetId) return;
+            const el = document.getElementById(activeColorTargetId);
+            if (el) {
+                if (activeColorTargetId === 'box-bg-left') {
+                    // Convert hex to rgb with opacity
+                    el.style.backgroundColor = hexToRgba(colorHex, 0.15);
+                } else {
+                    el.style.backgroundColor = colorHex;
+                }
+            }
+            closeColorModal();
+            saveToFirebase();
+        }
+
+        function hexToRgba(hex, alpha) {
+            let c = hex.replace('#','');
+            if(c.length===3) c = c.split('').map(x => x + x).join('');
+            const num = parseInt(c,16);
+            return `rgba(${num>>16},${(num>>8)&255},${num&255},${alpha})`;
+        }
+
+        // Font Size Adjuster
+        window.changeFontSize = function(val, save=true) {
+            document.getElementById('font-size-label').innerText = val + '%';
+            const resumeEl = document.getElementById('resume-canvas');
+            resumeEl.style.fontSize = (val / 100) * 100 + '%';
+            if (save && currentUser) {
+                // auto update state
+            }
+        }
+
+        // Fullscreen Immersive View
+        window.openFullscreenModal = function() {
+            const modal = document.getElementById('fullscreen-modal');
+            const container = document.getElementById('fullscreen-resume-container');
+            const resumeCanvas = document.getElementById('resume-canvas');
+            
+            container.innerHTML = '';
+            const clone = resumeCanvas.cloneNode(true);
+            clone.id = "fullscreen-resume-canvas";
+            clone.style.width = "900px";
+            clone.style.margin = "0 auto";
+            container.appendChild(clone);
+
+            modal.classList.remove('hidden');
+        }
+
+        window.closeFullscreenModal = function() {
+            document.getElementById('fullscreen-modal').classList.add('hidden');
+        }
+
+        // High-Res PNG Export
+        window.exportHighResPNG = function() {
+            const targetEl = document.getElementById('fullscreen-resume-canvas') || document.getElementById('resume-canvas');
+            showMsg("高畫質圖片生成中", "正在以 3x 高解析度渲染 PNG 圖片，請稍候...", "success");
+            
+            html2canvas(targetEl, { scale: 3, useCORS: true, allowTaint: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'HighRes_Corporate_Resume.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                showMsg("匯出錯誤", "無法生成高畫質 PNG 圖片: " + err.message, "error");
+            });
         }
 
         // Dynamic Experience Row
@@ -734,6 +930,7 @@
             const data = gatherFormData();
 
             document.getElementById('preview-name').innerText = data.name;
+            document.getElementById('preview-eng-name').innerText = data.engName;
             document.getElementById('preview-photo').src = data.photo || 'https://placehold.co/300x300/d48386/ffffff?text=Photo';
             document.getElementById('preview-phone').innerText = data.phone;
             document.getElementById('preview-email').innerText = data.email;
@@ -793,10 +990,10 @@
             const data = gatherFormData();
             const wb = XLSX.utils.book_new();
 
-            // Basic Info Sheet
             const basicWsData = [
                 ["欄位", "數值"],
                 ["姓名", data.name],
+                ["英文名/職稱", data.engName],
                 ["照片網址", data.photo],
                 ["電話", data.phone],
                 ["信箱", data.email],
@@ -808,19 +1005,16 @@
             const wsBasic = XLSX.utils.aoa_to_sheet(basicWsData);
             XLSX.utils.book_append_sheet(wb, wsBasic, "基本資料");
 
-            // Experiences Sheet
             const expWsData = [["期間", "職稱", "工作敘述"]];
             data.experiences.forEach(e => expWsData.push([e.period, e.title, e.desc]));
             const wsExp = XLSX.utils.aoa_to_sheet(expWsData);
             XLSX.utils.book_append_sheet(wb, wsExp, "經驗經歷");
 
-            // Skills Sheet
             const skillWsData = [["技能名稱", "評分"]];
             data.skills.forEach(s => skillWsData.push([s.name, s.rating]));
             const wsSkill = XLSX.utils.aoa_to_sheet(skillWsData);
             XLSX.utils.book_append_sheet(wb, wsSkill, "技能專長");
 
-            // Hobbies Sheet
             const hobbyWsData = [["興趣名稱", "圖標"]];
             data.hobbies.forEach(h => hobbyWsData.push([h.name, h.icon]));
             const wsHobby = XLSX.utils.aoa_to_sheet(hobbyWsData);
@@ -843,13 +1037,13 @@
 
                     const importedData = { experiences: [], skills: [], hobbies: [] };
 
-                    // Basic Sheet
                     if (workbook.SheetNames.includes("基本資料")) {
                         const sheet = workbook.Sheets["基本資料"];
                         const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                         for (let i = 1; i < json.length; i++) {
                             const row = json[i];
                             if (row[0] === "姓名") importedData.name = row[1] || "";
+                            if (row[0] === "英文名/職稱") importedData.engName = row[1] || "";
                             if (row[0] === "照片網址") importedData.photo = row[1] || "";
                             if (row[0] === "電話") importedData.phone = row[1] || "";
                             if (row[0] === "信箱") importedData.email = row[1] || "";
@@ -860,7 +1054,6 @@
                         }
                     }
 
-                    // Experiences Sheet
                     if (workbook.SheetNames.includes("經驗經歷")) {
                         const sheet = workbook.Sheets["經驗經歷"];
                         const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -872,7 +1065,6 @@
                         }
                     }
 
-                    // Skills Sheet
                     if (workbook.SheetNames.includes("技能專長")) {
                         const sheet = workbook.Sheets["技能專長"];
                         const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -884,7 +1076,6 @@
                         }
                     }
 
-                    // Hobbies Sheet
                     if (workbook.SheetNames.includes("興趣愛好")) {
                         const sheet = workbook.Sheets["興趣愛好"];
                         const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -904,21 +1095,6 @@
             };
             reader.readAsArrayBuffer(file);
             event.target.value = '';
-        }
-
-        // PNG Export using html2canvas
-        window.exportToPNG = function() {
-            const resumeElement = document.getElementById('resume-canvas');
-            showMsg("圖片生成中", "正在將履歷表轉換為高效能 PNG 圖片，請稍候...", "success");
-            
-            html2canvas(resumeElement, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'Corporate_Resume.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                showMsg("匯出錯誤", "無法生成 PNG 圖片: " + err.message, "error");
-            });
         }
 
         // Modal Helper Functions
