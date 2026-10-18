@@ -672,7 +672,29 @@
 
         openFullScreenBtn.addEventListener('click', () => {
             const newWindow = window.open('', '_blank');
-            newWindow.document.write(`
+            const skillsHtml = (resumeData.skills || []).map(skill => `
+                <div class="flex items-center justify-between bg-white/90 px-4 py-3 rounded-xl shadow-sm">
+                    <span class="text-xs font-black text-slate-800">${skill.name}</span>
+                    <div class="flex space-x-1">
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${1 <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${2 <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${3 <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${4 <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                        <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${5 <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            const expHtml = (resumeData.experiences || []).map(exp => `
+                <div class="relative">
+                    <div class="absolute -left-[35px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white" style="background-color: ${resumeData.themeDark || '#3b4954'};"></div>
+                    <div class="text-xs font-bold" style="color: ${resumeData.themeColor || '#d9777f'};">${exp.period}</div>
+                    <div class="text-base font-black text-slate-900">${exp.title}</div>
+                    <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
+                </div>
+            `).join('');
+
+            const htmlContent = `
                 <!DOCTYPE html>
                 <html lang="zh-TW">
                 <head>
@@ -697,7 +719,6 @@
                     </div>
 
                     <div id="fullResumeCanvas" class="w-full max-w-[900px] bg-white text-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative" style="font-size: ${resumeData.fontSize || 100}%;">
-                        <!-- 左側 -->
                         <div class="w-full md:w-[340px] p-10 flex flex-col justify-between shrink-0" style="background-color: ${resumeData.themeColor || '#d9777f'};">
                             <div>
                                 <div class="w-48 h-48 mx-auto rounded-3xl shadow-lg overflow-hidden border-4 border-white mb-8 bg-white flex items-center justify-center">
@@ -731,21 +752,11 @@
                                     技能專長
                                 </div>
                                 <div class="space-y-3">
-                                    ${(resumeData.skills || []).map(skill => `
-                                        <div class="flex items-center justify-between bg-white/90 px-4 py-3 rounded-xl shadow-sm">
-                                            <span class="text-xs font-black text-slate-800">${skill.name}</span>
-                                            <div class="flex space-x-1">
-                                                ${[1, 2, 3, 4, 5].map(star => `
-                                                    <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${star <= skill.level ? (resumeData.themeDark || '#3b4954') : '#cbd5e1'};"></div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                    `).join('')}
+                                    ${skillsHtml}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 右側 -->
                         <div class="flex-1 p-10 flex flex-col justify-between bg-white">
                             <div>
                                 <div class="flex items-start justify-between border-b-2 border-slate-100 pb-6 mb-6">
@@ -767,14 +778,7 @@
                                         經驗經歷
                                     </div>
                                     <div class="space-y-5 border-l-2 border-slate-200 ml-3 pl-6">
-                                        ${(resumeData.experiences || []).map(exp => `
-                                            <div class="relative">
-                                                <div class="absolute -left-[35px] top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white" style="background-color: ${resumeData.themeDark || '#3b4954'};"></div>
-                                                <div class="text-xs font-bold" style="color: ${resumeData.themeColor \vert{}\vert{} '#d9777f'};">${exp.period}</div>
-                                                <div class="text-base font-black text-slate-900">${exp.title}</div>
-                                                <div class="text-xs text-slate-600 font-medium mt-1">${exp.desc}</div>
-                                            </div>
-                                        `).join('')}
+                                        ${expHtml}
                                     </div>
                                 </div>
                             </div>
@@ -797,7 +801,10 @@
                     <\/script>
                 </body>
                 </html>
-            `);
+            `;
+
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
         });
 
         exportExcelBtn.addEventListener('click', () => {
