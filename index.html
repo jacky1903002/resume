@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專業企業履歷管理系統 - Professional Corporate Resume</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (XLSX) for Excel Export/Import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- html2canvas for PNG Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        corporate: {
+                            rose: '#d48386',
+                            roseDark: '#b86a6d',
+                            navy: '#2c3e50',
+                            navyLight: '#34495e',
+                            offwhite: '#f8f9fa',
+                            card: '#ffffff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans TC', 'Inter', sans-serif; background-color: #f8f9fa; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print {
+            body { background: white; }
+            no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Auth / Login Portal Modal -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md mx-4 rounded-2xl shadow-2xl p-8 border border-slate-100 transform transition-all">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-corporate-navy text-white text-2xl font-black mb-4 shadow-lg shadow-corporate-navy/20">
+                    <i class="fa-solid fa-address-card"></i>
+                </div>
+                <h1 class="text-2xl font-black text-corporate-navy tracking-tight">專業企業履歷系統</h1>
+                <p class="text-sm text-slate-500 mt-1">請登入您的 Firebase 帳號以同步雲端履歷資料</p>
+            </div>
+
+            <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">電子郵件帳號</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" id="login-email" required placeholder="name@company.com" 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-corporate-navy focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">密碼</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" required placeholder="••••••••" 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-corporate-navy focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div id="auth-error" class="hidden text-xs font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="auth-error-text">登入失敗，請檢查帳號密碼。</span>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" id="login-btn" class="flex-1 py-3 bg-corporate-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg shadow-corporate-navy/20 transition-all text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i> 登入系統
+                    </button>
+                    <button type="button" onclick="handleRegister()" id="register-btn" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-corporate-navy font-bold rounded-xl transition-all text-sm">
+                        註冊帳號
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-xs text-slate-400">提示：首次使用可直接輸入新郵件與密碼點擊「註冊帳號」</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Modal -->
+    <div id="msg-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl p-6 text-center border border-slate-100">
+            <div id="msg-icon" class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-4">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="msg-title" class="text-lg font-black text-slate-800 mb-2">通知訊息</h3>
+            <p id="msg-text" class="text-sm text-slate-600 mb-6">操作已成功完成。</p>
+            <button onclick="closeMsgModal()" class="w-full py-2.5 bg-corporate-navy text-white font-bold rounded-xl text-sm shadow-md hover:bg-slate-800 transition-all">確定</button>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-corporate-navy text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-corporate-rose flex items-center justify-center text-white font-black text-lg shadow-inner">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg tracking-tight leading-none">專業企業履歷系統</h1>
+                    <span class="text-xs text-slate-300 font-medium">Professional Corporate Resume</span>
+                </div>
+            </div>
+
+            <!-- Status & User Profile Info -->
+            <div class="flex items-center space-x-4">
+                <!-- Connection Status -->
+                <div id="conn-status" class="hidden sm:flex items-center space-x-2 px-3 py-1 bg-slate-800/80 rounded-full border border-slate-700 text-xs font-semibold">
+                    <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="conn-text" class="text-slate-200">雲端連線中</span>
+                </div>
+
+                <!-- Last Saved Timestamp -->
+                <div class="hidden md:flex items-center space-x-1.5 text-xs text-slate-300 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-700">
+                    <i class="fa-solid fa-clock-rotate-left text-corporate-rose"></i>
+                    <span>上次儲存: <strong id="last-saved-time" class="text-white font-medium">尚未儲存</strong></span>
+                </div>
+
+                <!-- User email & Logout -->
+                <div class="flex items-center space-x-3 border-l border-slate-700 pl-4">
+                    <span id="user-display-email" class="text-xs font-medium text-slate-300 hidden lg:inline-block truncate max-w-[150px]"></span>
+                    <button onclick="handleLogout()" class="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-right-from-bracket"></i> 登出
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Column: Interactive Form Panel (5 cols) -->
+        <section class="lg:col-span-5 bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden flex flex-col h-[calc(100vh-7rem)] sticky top-20">
+            <div class="bg-corporate-navy text-white px-6 py-4 flex items-center justify-between border-b border-slate-700">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-corporate-rose"></i>
+                    <h2 class="font-bold text-base tracking-wide">編輯個人履歷資料</h2>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="saveToFirebase()" class="px-3 py-1.5 bg-corporate-rose hover:bg-corporate-roseDark text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> 儲存至雲端
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toolbar for Excel & PNG -->
+            <div class="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-excel"></i> 匯出 Excel
+                    </button>
+                    <label class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-file-import"></i> 匯入 Excel
+                        <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
+                    </label>
+                </div>
+                <button onclick="exportToPNG()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-image"></i> 一鍵匯出 PNG
+                </button>
+            </div>
+
+            <!-- Form Fields Container -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                
+                <!-- Personal Basic Info -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy border-b border-slate-200 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-user text-corporate-rose"></i> 基本資料
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">姓名 (中/英文)</label>
+                            <input type="text" id="input-name" value="盧麗思" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">照片圖片網址 (URL)</label>
+                            <input type="text" id="input-photo" value="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">電話號碼</label>
+                            <input type="text" id="input-phone" value="(091) -122-565454-651" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">電子信箱</label>
+                            <input type="email" id="input-email" value="EmmyC@vp.com" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">工作室 / 地址</label>
+                            <input type="text" id="input-address" value="艾美工作室 紐約市123街" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">學歷背景</label>
+                            <input type="text" id="input-education" value="香港浸會大學 文學學士 (榮譽) 在多媒體" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">認證 / 榮譽頭銜</label>
+                        <input type="text" id="input-cert" value="認證領導顧問" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">
+                    </div>
+                </div>
+
+                <!-- Summary / About Me -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy border-b border-slate-200 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-address-card text-corporate-rose"></i> 關於我 (個人簡介)
+                    </h3>
+                    <div>
+                        <textarea id="input-summary" rows="3" oninput="updatePreview()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-corporate-navy focus:bg-white outline-none">博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。尢猁逃綜捊闞眢藎酋泞忁沄佈杌嗹蔥兀莯紲凝渲。仿垠郗淬恐鸛菹狊汏挑疕芙於笮毛纫蚅賬陳。冇郡哈揆局鴞堿漫而吁吊哢神紡邴幫亍畀魅挐。</textarea>
+                    </div>
+                </div>
+
+                <!-- Experience Timeline Items -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
+                            <i class="fa-solid fa-timeline text-corporate-rose"></i> 經驗經歷 (Experience)
+                        </h3>
+                        <button onclick="addExperienceRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 新增經驗
+                        </button>
+                    </div>
+                    <div id="experience-forms-container" class="space-y-3">
+                        <!-- Dynamic Experience Forms -->
+                    </div>
+                </div>
+
+                <!-- Skills & Ratings -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
+                            <i class="fa-solid fa-star text-corporate-rose"></i> 技能專長 (評分 1-5)
+                        </h3>
+                        <button onclick="addSkillRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 新增技能
+                        </button>
+                    </div>
+                    <div id="skills-forms-container" class="space-y-3">
+                        <!-- Dynamic Skills Forms -->
+                    </div>
+                </div>
+
+                <!-- Hobbies / Interests -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-corporate-navy flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-corporate-rose"></i> 興趣愛好 (Hobbies)
+                        </h3>
+                        <button onclick="addHobbyRow()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-corporate-navy rounded font-bold text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 新增興趣
+                        </button>
+                    </div>
+                    <div id="hobbies-forms-container" class="space-y-3">
+                        <!-- Dynamic Hobbies Forms -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Right Column: Large Detailed Resume Preview (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col items-center">
+            <div class="w-full flex items-center justify-between mb-3 px-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye text-corporate-rose"></i> 大型個人詳細履歷表預覽 (Live Preview)
+                </span>
+                <span class="text-xs text-slate-400 font-medium">企業商業旗艦版</span>
+            </div>
+
+            <!-- Resume Canvas Card (Target for PNG Export) -->
+            <div id="resume-canvas" class="w-full bg-[#fdfbfb] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative font-sans text-slate-800" style="min-height: 1100px;">
+                
+                <!-- Background split layout resembling reference image -->
+                <div class="absolute top-0 left-0 w-full md:w-[38%] h-full bg-corporate-rose/15 pointer-events-none"></div>
+
+                <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 min-h-[1100px]">
+                    
+                    <!-- Left Sidebar (4.5 cols on md) -->
+                    <div class="md:col-span-5 p-6 md:p-8 flex flex-col justify-between border-r border-corporate-rose/20 bg-corporate-rose/5">
+                        <div class="space-y-8">
+                            <!-- Hexagon / Photo Frame -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-white mb-6 relative transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                                    <img id="preview-photo" src="" alt="Avatar" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/d48386/ffffff?text=Photo'">
+                                </div>
+                            </div>
+
+                            <!-- Contact Info Section -->
+                            <div class="space-y-4 bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20">
+                                <div class="flex items-start gap-3">
+                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-phone text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-slate-400 uppercase">電話號碼</div>
+                                        <div id="preview-phone" class="text-xs font-bold text-slate-700 break-all"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-envelope text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-slate-400 uppercase">電子信箱</div>
+                                        <div id="preview-email" class="text-xs font-bold text-slate-700 break-all"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-location-dot text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-slate-400 uppercase">工作室 / 地址</div>
+                                        <div id="preview-address" class="text-xs font-bold text-slate-700"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-graduation-cap text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-slate-400 uppercase">學歷背景</div>
+                                        <div id="preview-education" class="text-xs font-bold text-slate-700"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="w-8 h-8 rounded-xl bg-corporate-rose text-white flex items-center justify-center shrink-0 shadow-sm">
+                                        <i class="fa-solid fa-award text-xs"></i>
+                                    </span>
+                                    <div>
+                                        <div class="text-[11px] font-bold text-slate-400 uppercase">認證 / 榮譽</div>
+                                        <div id="preview-cert" class="text-xs font-bold text-slate-700"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Skills Section -->
+                            <div>
+                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md">
+                                    技能專長
+                                </div>
+                                <div id="preview-skills" class="space-y-3 bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-corporate-rose/20">
+                                    <!-- Dynamic Skills Render -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-4 border-t border-corporate-rose/20 text-center text-[11px] text-slate-400 font-medium">
+                            Professional Resume • Corporate Edition
+                        </div>
+                    </div>
+
+                    <!-- Right Main Section (7 cols on md) -->
+                    <div class="md:col-span-7 p-6 md:p-10 flex flex-col justify-between bg-white">
+                        <div class="space-y-8">
+                            
+                            <!-- Header Name & About Me -->
+                            <div>
+                                <div class="flex items-baseline justify-between mb-4">
+                                    <h1 id="preview-name" class="text-3xl md:text-5xl font-black text-corporate-navy tracking-tight"></h1>
+                                    <span class="text-xs font-extrabold px-3 py-1 bg-corporate-rose/20 text-corporate-rose rounded-full">VIP 商業旗艦</span>
+                                </div>
+
+                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-3 shadow-md">
+                                    關於我
+                                </div>
+                                <p id="preview-summary" class="text-xs md:text-sm text-slate-600 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                </p>
+                            </div>
+
+                            <!-- Experience Timeline Section -->
+                            <div>
+                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-5 shadow-md">
+                                    經驗經歷
+                                </div>
+                                <div id="preview-experience" class="space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-corporate-rose/40 pl-2">
+                                    <!-- Dynamic Experience Timeline -->
+                                </div>
+                            </div>
+
+                            <!-- Hobbies & Interests Section -->
+                            <div>
+                                <div class="inline-block px-5 py-1.5 bg-corporate-navy text-white rounded-full font-black text-xs uppercase tracking-wider mb-4 shadow-md">
+                                    興趣愛好
+                                </div>
+                                <div id="preview-hobbies" class="grid grid-cols-3 gap-3">
+                                    <!-- Dynamic Hobbies -->
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="mt-10 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                            <span>企業級履歷數據管理</span>
+                            <span>Powered by Firebase Realtime DB</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Firebase SDKs & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // Provided Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyACPEmAeUX5zruIKxXXTfNkgdtrpZJvfy4",
+            authDomain: "resume-3f321.firebaseapp.com",
+            projectId: "resume-3f321",
+            storageBucket: "resume-3f321.firebasestorage.app",
+            messagingSenderId: "156367866837",
+            appId: "1:156367866837:web:895fe9bdea4b76506f4b5c",
+            measurementId: "G-5KKFNGVN6L",
+            databaseURL: "https://resume-3f321-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let currentUser = null;
+        let isOnline = navigator.onLine;
+
+        // Default Sample Data
+        const defaultResumeData = {
+            name: "盧麗思",
+            photo: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
+            phone: "(091) -122-565454-651",
+            email: "EmmyC@vp.com",
+            address: "艾美工作室 紐約市123街",
+            education: "香港浸會大學 文學學士 (榮譽) 在多媒體",
+            cert: "認證領導顧問",
+            summary: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。尢猁逃綜捊闞眢藎酋泞忁沄佈杌嗹蔥兀莯紲凝渲。仿垠郗淬恐鸛菹狊汏挑疕芙於笮毛纫蚅賬陳。冇郡哈揆局鴞堿漫而吁吊哢神紡邴幫亍畀魅挐。",
+            experiences: [
+                { period: "2006 - 現在", title: "銷售團隊負責人", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
+                { period: "2003 - 2006", title: "銷售經理", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
+                { period: "2003 - 2006", title: "營業員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" },
+                { period: "2003 - 2006", title: "服務員", desc: "博波邛爵隩驛夼一清癲莫坑丸桓桹亍，嚘稷丌沐柲舉狨王亍盼駟辶胪戠。毋炆樞椴始龢儜疇癙忙虹洞她晪沌沴荵兀莰鎩玆窡笥。" }
+            ],
+            skills: [
+                { name: "英語", rating: 4 },
+                { name: "法語", rating: 4 },
+                { name: "德語", rating: 4 },
+                { name: "中文", rating: 4 }
+            ],
+            hobbies: [
+                { name: "保齡球", icon: "fa-solid fa-bowling-ball" },
+                { name: "籃球", icon: "fa-solid fa-basketball" },
+                { name: "溜冰", icon: "fa-solid fa-person-skating" }
+            ]
+        };
+
+        // Network status monitor
+        window.addEventListener('online', () => { isOnline = true; updateConnUI(); });
+        window.addEventListener('offline', () => { isOnline = false; updateConnUI(); });
+        function updateConnUI() {
+            const dot = document.getElementById('conn-dot');
+            const txt = document.getElementById('conn-text');
+            if (isOnline) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+                txt.innerText = "雲端連線中";
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
+                txt.innerText = "離線模式";
+            }
+        }
+
+        // Auth State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-modal').classList.add('hidden');
+                document.getElementById('user-display-email').innerText = user.email;
+                loadDataFromFirebase();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-modal').classList.remove('hidden');
+            }
+        });
+
+        // Login Handler
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errBox = document.getElementById('auth-error');
+            const errText = document.getElementById('auth-error-text');
+            errBox.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                errText.innerText = "登入失敗: " + error.message;
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        // Register Handler
+        window.handleRegister = async function() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const errBox = document.getElementById('auth-error');
+            const errText = document.getElementById('auth-error-text');
+            errBox.classList.add('hidden');
+
+            if (!email || !pass) {
+                errText.innerText = "請輸入電子郵件與密碼再註冊。";
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                showMsg("註冊成功", "已成功建立帳號並登入！", "success");
+            } catch (error) {
+                errText.innerText = "註冊失敗: " + error.message;
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        // Logout Handler
+        window.handleLogout = async function() {
+            await signOut(auth);
+        }
+
+        // Save Data to Firebase Realtime Database
+        window.saveToFirebase = async function() {
+            if (!currentUser) return;
+            const data = gatherFormData();
+            const safeEmailKey = currentUser.email.replace(/[.#$\/\[\]]/g, "_");
+            const dbRef = ref(db, 'resumes/' + safeEmailKey);
+            
+            try {
+                await set(dbRef, data);
+                const nowStr = new Date().toLocaleString('zh-TW');
+                document.getElementById('last-saved-time').innerText = nowStr;
+                localStorage.setItem('resume_last_saved', nowStr);
+                showMsg("儲存成功", "履歷資料已成功同步至 Firebase Realtime Database！", "success");
+            } catch (err) {
+                showMsg("儲存失敗", err.message, "error");
+            }
+        }
+
+        // Load Data from Firebase
+        function loadDataFromFirebase() {
+            if (!currentUser) return;
+            const safeEmailKey = currentUser.email.replace(/[.#$\/\[\]]/g, "_");
+            const dbRef = ref(db, 'resumes/' + safeEmailKey);
+
+            onValue(dbRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                    populateForm(val);
+                } else {
+                    // Populate default if first time
+                    populateForm(defaultResumeData);
+                    saveToFirebase();
+                }
+                const savedTime = localStorage.getItem('resume_last_saved') || '剛剛';
+                document.getElementById('last-saved-time').innerText = savedTime;
+            }, (error) => {
+                console.error("Firebase read error:", error);
+            });
+        }
+
+        // Populate Form from JSON object
+        function populateForm(data) {
+            document.getElementById('input-name').value = data.name || '';
+            document.getElementById('input-photo').value = data.photo || '';
+            document.getElementById('input-phone').value = data.phone || '';
+            document.getElementById('input-email').value = data.email || '';
+            document.getElementById('input-address').value = data.address || '';
+            document.getElementById('input-education').value = data.education || '';
+            document.getElementById('input-cert').value = data.cert || '';
+            document.getElementById('input-summary').value = data.summary || '';
+
+            // Experiences
+            const expContainer = document.getElementById('experience-forms-container');
+            expContainer.innerHTML = '';
+            (data.experiences || []).forEach(exp => {
+                appendExperienceRow(exp.period, exp.title, exp.desc);
+            });
+
+            // Skills
+            const skillContainer = document.getElementById('skills-forms-container');
+            skillContainer.innerHTML = '';
+            (data.skills || []).forEach(skill => {
+                appendSkillRow(skill.name, skill.rating);
+            });
+
+            // Hobbies
+            const hobbyContainer = document.getElementById('hobbies-forms-container');
+            hobbyContainer.innerHTML = '';
+            (data.hobbies || []).forEach(hobby => {
+                appendHobbyRow(hobby.name, hobby.icon);
+            });
+
+            updatePreview();
+        }
+
+        // Gather Form Data
+        function gatherFormData() {
+            const data = {
+                name: document.getElementById('input-name').value,
+                photo: document.getElementById('input-photo').value,
+                phone: document.getElementById('input-phone').value,
+                email: document.getElementById('input-email').value,
+                address: document.getElementById('input-address').value,
+                education: document.getElementById('input-education').value,
+                cert: document.getElementById('input-cert').value,
+                summary: document.getElementById('input-summary').value,
+                experiences: [],
+                skills: [],
+                hobbies: []
+            };
+
+            document.querySelectorAll('.experience-item').forEach(el => {
+                data.experiences.push({
+                    period: el.querySelector('.exp-period').value,
+                    title: el.querySelector('.exp-title').value,
+                    desc: el.querySelector('.exp-desc').value
+                });
+            });
+
+            document.querySelectorAll('.skill-item').forEach(el => {
+                data.skills.push({
+                    name: el.querySelector('.skill-name').value,
+                    rating: parseInt(el.querySelector('.skill-rating').value) || 3
+                });
+            });
+
+            document.querySelectorAll('.hobby-item').forEach(el => {
+                data.hobbies.push({
+                    name: el.querySelector('.hobby-name').value,
+                    icon: el.querySelector('.hobby-icon').value
+                });
+            });
+
+            return data;
+        }
+
+        // Dynamic Experience Row
+        window.addExperienceRow = function(period = "2024 - 現在", title = "資深專案經理", desc = "請輸入工作內容說明...") {
+            const container = document.getElementById('experience-forms-container');
+            const div = document.createElement('div');
+            div.className = "experience-item bg-slate-50 p-3 rounded-xl border border-slate-200 relative space-y-2";
+            div.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <input type="text" value="${period}" placeholder="期間 (例: 2020-現在)" class="exp-period w-1/2 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
+                    <button type="button" onclick="this.closest('.experience-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <input type="text" value="${title}" placeholder="職稱" class="exp-title w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
+                <textarea rows="2" placeholder="工作敘述" class="exp-desc w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs focus:outline-none" oninput="updatePreview()">${desc}</textarea>
+            `;
+            container.appendChild(div);
+            updatePreview();
+        }
+
+        // Dynamic Skill Row
+        window.addSkillRow = function(name = "專案管理", rating = 5) {
+            const container = document.getElementById('skills-forms-container');
+            const div = document.createElement('div');
+            div.className = "skill-item bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2";
+            div.innerHTML = `
+                <input type="text" value="${name}" placeholder="技能名稱" class="skill-name flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
+                <select class="skill-rating px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" onchange="updatePreview()">
+                    <option value="1" ${rating==1?'selected':''}>1分</option>
+                    <option value="2" ${rating==2?'selected':''}>2分</option>
+                    <option value="3" ${rating==3?'selected':''}>3分</option>
+                    <option value="4" ${rating==4?'selected':''}>4分</option>
+                    <option value="5" ${rating==5?'selected':''}>5分</option>
+                </select>
+                <button type="button" onclick="this.closest('.skill-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+            updatePreview();
+        }
+
+        // Dynamic Hobby Row
+        window.addHobbyRow = function(name = "閱讀", icon = "fa-solid fa-book") {
+            const container = document.getElementById('hobbies-forms-container');
+            const div = document.createElement('div');
+            div.className = "hobby-item bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-2";
+            div.innerHTML = `
+                <input type="text" value="${name}" placeholder="興趣名稱" class="hobby-name flex-1 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-bold focus:outline-none" oninput="updatePreview()">
+                <input type="text" value="${icon}" placeholder="FontAwesome Icon" class="hobby-icon w-1/3 px-2 py-1 bg-white border border-slate-200 rounded text-xs focus:outline-none" oninput="updatePreview()">
+                <button type="button" onclick="this.closest('.hobby-item').remove(); updatePreview();" class="text-rose-500 hover:text-rose-700 text-xs px-2"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+            updatePreview();
+        }
+
+        // Update Live Resume Preview
+        window.updatePreview = function() {
+            const data = gatherFormData();
+
+            document.getElementById('preview-name').innerText = data.name;
+            document.getElementById('preview-photo').src = data.photo || 'https://placehold.co/300x300/d48386/ffffff?text=Photo';
+            document.getElementById('preview-phone').innerText = data.phone;
+            document.getElementById('preview-email').innerText = data.email;
+            document.getElementById('preview-address').innerText = data.address;
+            document.getElementById('preview-education').innerText = data.education;
+            document.getElementById('preview-cert').innerText = data.cert;
+            document.getElementById('preview-summary').innerText = data.summary;
+
+            // Render Preview Skills
+            const skillsEl = document.getElementById('preview-skills');
+            skillsEl.innerHTML = '';
+            data.skills.forEach(s => {
+                let dotsHtml = '';
+                for(let i=1; i<=5; i++) {
+                    const active = i <= s.rating ? 'bg-corporate-rose' : 'bg-slate-200';
+                    dotsHtml += `<span class="w-3.5 h-3.5 rounded-full ${active} inline-block transition-all"></span>`;
+                }
+                skillsEl.innerHTML += `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-slate-700">${s.name}</span>
+                        <div class="flex items-center gap-1.5">${dotsHtml}</div>
+                    </div>
+                `;
+            });
+
+            // Render Preview Experience
+            const expEl = document.getElementById('preview-experience');
+            expEl.innerHTML = '';
+            data.experiences.forEach(e => {
+                expEl.innerHTML += `
+                    <div class="relative pl-6">
+                        <span class="absolute -left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-corporate-navy border-2 border-white shadow-sm"></span>
+                        <div class="text-[11px] font-black text-corporate-rose uppercase tracking-wider mb-0.5">${e.period}</div>
+                        <h4 class="text-xs md:text-sm font-black text-slate-800 mb-1">${e.title}</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed font-medium">${e.desc}</p>
+                    </div>
+                `;
+            });
+
+            // Render Preview Hobbies
+            const hobbyEl = document.getElementById('preview-hobbies');
+            hobbyEl.innerHTML = '';
+            data.hobbies.forEach(h => {
+                hobbyEl.innerHTML += `
+                    <div class="bg-white/90 p-4 rounded-2xl shadow-sm border border-corporate-rose/20 flex flex-col items-center justify-center text-center">
+                        <div class="w-10 h-10 rounded-xl bg-corporate-rose/15 text-corporate-rose flex items-center justify-center text-lg mb-2 shadow-inner">
+                            <i class="${h.icon}"></i>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700">${h.name}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // Excel Export
+        window.exportToExcel = function() {
+            const data = gatherFormData();
+            const wb = XLSX.utils.book_new();
+
+            // Basic Info Sheet
+            const basicWsData = [
+                ["欄位", "數值"],
+                ["姓名", data.name],
+                ["照片網址", data.photo],
+                ["電話", data.phone],
+                ["信箱", data.email],
+                ["地址", data.address],
+                ["學歷", data.education],
+                ["認證", data.cert],
+                ["關於我", data.summary]
+            ];
+            const wsBasic = XLSX.utils.aoa_to_sheet(basicWsData);
+            XLSX.utils.book_append_sheet(wb, wsBasic, "基本資料");
+
+            // Experiences Sheet
+            const expWsData = [["期間", "職稱", "工作敘述"]];
+            data.experiences.forEach(e => expWsData.push([e.period, e.title, e.desc]));
+            const wsExp = XLSX.utils.aoa_to_sheet(expWsData);
+            XLSX.utils.book_append_sheet(wb, wsExp, "經驗經歷");
+
+            // Skills Sheet
+            const skillWsData = [["技能名稱", "評分"]];
+            data.skills.forEach(s => skillWsData.push([s.name, s.rating]));
+            const wsSkill = XLSX.utils.aoa_to_sheet(skillWsData);
+            XLSX.utils.book_append_sheet(wb, wsSkill, "技能專長");
+
+            // Hobbies Sheet
+            const hobbyWsData = [["興趣名稱", "圖標"]];
+            data.hobbies.forEach(h => hobbyWsData.push([h.name, h.icon]));
+            const wsHobby = XLSX.utils.aoa_to_sheet(hobbyWsData);
+            XLSX.utils.book_append_sheet(wb, wsHobby, "興趣愛好");
+
+            XLSX.writeFile(wb, "Corporate_Resume_Data.xlsx");
+            showMsg("匯出成功", "已成功將履歷資料匯出為 Excel 試算表檔案！", "success");
+        }
+
+        // Excel Import
+        window.importFromExcel = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    const importedData = { experiences: [], skills: [], hobbies: [] };
+
+                    // Basic Sheet
+                    if (workbook.SheetNames.includes("基本資料")) {
+                        const sheet = workbook.Sheets["基本資料"];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (row[0] === "姓名") importedData.name = row[1] || "";
+                            if (row[0] === "照片網址") importedData.photo = row[1] || "";
+                            if (row[0] === "電話") importedData.phone = row[1] || "";
+                            if (row[0] === "信箱") importedData.email = row[1] || "";
+                            if (row[0] === "地址") importedData.address = row[1] || "";
+                            if (row[0] === "學歷") importedData.education = row[1] || "";
+                            if (row[0] === "認證") importedData.cert = row[1] || "";
+                            if (row[0] === "關於我") importedData.summary = row[1] || "";
+                        }
+                    }
+
+                    // Experiences Sheet
+                    if (workbook.SheetNames.includes("經驗經歷")) {
+                        const sheet = workbook.Sheets["經驗經歷"];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (row[0] || row[1]) {
+                                importedData.experiences.push({ period: row[0]||"", title: row[1]||"", desc: row[2]||"" });
+                            }
+                        }
+                    }
+
+                    // Skills Sheet
+                    if (workbook.SheetNames.includes("技能專長")) {
+                        const sheet = workbook.Sheets["技能專長"];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (row[0]) {
+                                importedData.skills.push({ name: row[0], rating: parseInt(row[1])||3 });
+                            }
+                        }
+                    }
+
+                    // Hobbies Sheet
+                    if (workbook.SheetNames.includes("興趣愛好")) {
+                        const sheet = workbook.Sheets["興趣愛好"];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (row[0]) {
+                                importedData.hobbies.push({ name: row[0], icon: row[1]||"fa-solid fa-star" });
+                            }
+                        }
+                    }
+
+                    populateForm(importedData);
+                    showMsg("匯入成功", "已成功從 Excel 檔案匯入履歷資料！", "success");
+                } catch (err) {
+                    showMsg("匯入失敗", "檔案格式錯誤或無法讀取: " + err.message, "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        // PNG Export using html2canvas
+        window.exportToPNG = function() {
+            const resumeElement = document.getElementById('resume-canvas');
+            showMsg("圖片生成中", "正在將履歷表轉換為高效能 PNG 圖片，請稍候...", "success");
+            
+            html2canvas(resumeElement, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Corporate_Resume.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                showMsg("匯出錯誤", "無法生成 PNG 圖片: " + err.message, "error");
+            });
+        }
+
+        // Modal Helper Functions
+        window.showMsg = function(title, text, type = "success") {
+            document.getElementById('msg-title').innerText = title;
+            document.getElementById('msg-text').innerText = text;
+            const iconEl = document.getElementById('msg-icon');
+            if (type === "success") {
+                iconEl.className = "w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-4";
+                iconEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else {
+                iconEl.className = "w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl mx-auto mb-4";
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            }
+            document.getElementById('msg-modal').classList.remove('hidden');
+        }
+
+        window.closeMsgModal = function() {
+            document.getElementById('msg-modal').classList.add('hidden');
+        }
+
+        // Initial setup load
+        window.onload = function() {
+            populateForm(defaultResumeData);
+        }
+    </script>
+</body>
+</html>
